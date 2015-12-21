@@ -79,14 +79,14 @@ protected:
 
 private:
 
-	int _udpPort;
-	char _ntpServerName[NTP_SERVER_NAME_SIZE];
-	IPAddress _timeServerIP;
+	int _udpPort; //UDP port number to send request from
+	char _ntpServerName[NTP_SERVER_NAME_SIZE]; //NTP server name
+	IPAddress _timeServerIP; //NTP server IP address
 
-	int _timeZone;
-	WiFiUDP _udp;
-	byte _ntpPacketBuffer[NTP_PACKET_SIZE];
-	int _interval;
+	int _timeZone; //Local time zone. Added to NTP time
+	WiFiUDP _udp; //UDP port object
+	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Bffer to store request and response messages
+	int _interval; //Interval to set periodic time sync
 
 
 };
