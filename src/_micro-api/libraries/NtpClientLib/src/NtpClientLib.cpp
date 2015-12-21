@@ -7,6 +7,8 @@
 
 #include "NtpClientLib.h"
 
+//NTPClient ntpClient;
+
 time_t ntpClient::getNtpTime() {
 	if (WiFi.status() == WL_CONNECTED) {
 #ifdef DEBUG
@@ -75,6 +77,11 @@ ntpClient::ntpClient(int udpPort, String ntpServerName) {
 	Serial.println(_ntpServerName);
 	_interval = DEFAULT_NTP_INTERVAL;
 	_timeZone = DEFAULT_NTP_TIMEZONE;
+	s_client = this;
+}
+
+static time_t getNtpTime() {
+	return (s_client.getNtpTime()); 
 }
 
 boolean ntpClient::begin() {

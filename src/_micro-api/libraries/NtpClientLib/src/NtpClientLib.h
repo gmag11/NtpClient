@@ -77,6 +77,8 @@ protected:
 	//time_t _getNtpTime();
 	String printDigits(int digits);
 
+	static ntpClient* s_client;
+
 private:
 
 	int _udpPort; //UDP port number to send request from
@@ -90,6 +92,8 @@ private:
 
 
 };
+
+ntpClient ntp_client;
 
 #endif
 
