@@ -23,7 +23,8 @@ void setup() {
 	config.ssid = "SSID"; // Your SSID
 	config.password = "PASSWD"; //Your WiFi Password
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-	ntp = ntpClient(123,"pool.ntp.org")
+	ntp = ntpClient("pool.ntp.org");
+	ntp.begin();
 }
 
 // the loop function runs over and over again until power down or reset
