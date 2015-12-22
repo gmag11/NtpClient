@@ -20,13 +20,16 @@ time_t ntpClient::getNtpTime() {
 		Serial.println(_udp.localPort());
 #endif
 		while (_udp.parsePacket() > 0); // discard any previously received packets
-		Serial.print("NTP Server hostname: ");
 		uint8_t dnsResult = WiFi.hostByName(_ntpServerName, _timeServerIP);
+#ifdef DEBUG
+		Serial.print("NTP Server hostname: ");
+		Serial.println(_ntpServerName);
+		Serial.print("NTP Server IP address: ");
+		Serial.println(_timeServerIP);
+		Serial.print("Result code: ");
 		Serial.print(dnsResult);
 		Serial.print(" ");
-		Serial.println(_timeServerIP);
 		Serial.println("-- Wifi Connected. Waiting for sync");
-#ifdef DEBUG
 		Serial.println("-- Transmit NTP Request");
 #endif
 		if (dnsResult != 0) {
@@ -41,7 +44,7 @@ time_t ntpClient::getNtpTime() {
 					_udp.read(_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 					time_t timeValue = decodeNtpMessage(_ntpPacketBuffer);
 					setSyncInterval(/*NTP_SYNC_PERIOD*/86000);
-					Serial.println("Sync Period set low");
+					Serial.println("Sync frequency set low");
 					_udp.stop();
 
 					return timeValue;
@@ -71,7 +74,6 @@ ntpClient::ntpClient(int udpPort, String ntpServerName) {
 	_udpPort = udpPort;
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
 	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE);
-	//_ntpServerName = ntpServerName.c_str();
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
 	Serial.print("ntpClient instance created: ");
 	Serial.println(_ntpServerName);
@@ -81,7 +83,7 @@ ntpClient::ntpClient(int udpPort, String ntpServerName) {
 }
 
 static time_t getNtpTime() {
-	return (s_client.getNtpTime()); 
+	return (s_client->getNtpTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
 }
 
 boolean ntpClient::begin() {

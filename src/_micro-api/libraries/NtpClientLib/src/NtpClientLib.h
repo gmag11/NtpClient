@@ -8,6 +8,8 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
+#define DEBUG
+
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else
