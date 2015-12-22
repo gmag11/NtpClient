@@ -35,6 +35,7 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 class ntpClient {
 	
 public:
+	
 	ntpClient() {
 		ntpClient(DEFAULT_NTP_PORT, DEFAULT_NTP_SERVER);
 	}
@@ -48,14 +49,28 @@ public:
 	}
 
 	ntpClient(int udpPort, String ntpServerName);
+	ntpClient(const ntpClient& s) {};
 
-	//~ntpClient ();
+	static ntpClient* Instance();
+	
 
-	boolean begin(); //Starts NTP Sync
+	virtual ~ntpClient() {};
 
-	boolean stop(); //Stops NTP Sync
+	static boolean begin() { //Starts NTP Sync
+		if (s_client != NULL) {
+			setSyncProvider(s_client->getNtpTime); //NOT WORKING, FAIL TO COMPILE
+			//setSyncInterval(_interval); //TODO
+			return true;
+		} else 
+			return false;
+	}
+	
+	static boolean stop() { //Stops NTP Sync
+		setSyncProvider(NULL);
+		return true;
+	}
 
-	time_t getNtpTime(); //Starts a NTP time request to server. Returns a time in UNIX time format
+	time_t getNtpTime2(); //Starts a NTP time request to server. Returns a time in UNIX time format
 
 	//String getTimeString();
 
@@ -71,7 +86,12 @@ public:
 	boolean setTimeZone(int timeZone);
 	int getTimeZone();
 
+	static time_t getNtpTime() {
+		return (s_client->getNtpTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
+	}
+
 protected:
+	
 	
 	boolean sendNTPpacket(IPAddress &address);
 	time_t decodeNtpMessage(byte *messageBuffer);
@@ -79,7 +99,7 @@ protected:
 	//time_t _getNtpTime();
 	String printDigits(int digits);
 
-	static ntpClient* s_client;
+	
 
 private:
 
@@ -92,10 +112,13 @@ private:
 	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Bffer to store request and response messages
 	int _interval; //Interval to set periodic time sync
 
+	static ntpClient* s_client;
 
+	static void DestroyNtpClient() {
+		if (s_client != NULL)
+			delete s_client;
+	}
 };
-
-ntpClient ntp_client;
 
 #endif
 

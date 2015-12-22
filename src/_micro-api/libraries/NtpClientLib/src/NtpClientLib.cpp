@@ -9,7 +9,7 @@
 
 //NTPClient ntpClient;
 
-time_t ntpClient::getNtpTime() {
+time_t ntpClient::getNtpTime2() {
 	if (WiFi.status() == WL_CONNECTED) {
 #ifdef DEBUG
 		Serial.println("Starting UDP");
@@ -70,6 +70,15 @@ time_t ntpClient::getNtpTime() {
 	}
 }
 
+ntpClient* ntpClient::Instance() {
+	//ntpClient* s_client = 0;
+	if (s_client == NULL) {
+		s_client = new ntpClient;
+		atexit(&DestroyNtpClient);
+	}
+	return s_client;
+}
+
 ntpClient::ntpClient(int udpPort, String ntpServerName) {
 	_udpPort = udpPort;
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
@@ -80,20 +89,6 @@ ntpClient::ntpClient(int udpPort, String ntpServerName) {
 	_interval = DEFAULT_NTP_INTERVAL;
 	_timeZone = DEFAULT_NTP_TIMEZONE;
 	s_client = this;
-}
-
-static time_t getNtpTime() {
-	return (s_client->getNtpTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
-}
-
-boolean ntpClient::begin() {
-	setSyncProvider(ntpClient::getNtpTime); //NOT WORKING, FAIL TO COMPILE
-	//setSyncInterval(_interval); //TODO
-}
-
-boolean ntpClient::stop() {
-	setSyncProvider((time_t)0);
-	return true;
 }
 
 time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
