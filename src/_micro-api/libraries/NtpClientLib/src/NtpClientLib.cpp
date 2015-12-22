@@ -9,23 +9,42 @@
 
 //NTPClient ntpClient;
 
-time_t ntpClient::getNtpTime2() {
+bool ntpClient::instanceFlag = false;
+ntpClient *ntpClient::s_client = NULL;
+
+extern ntpClient client;
+
+ntpClient *ntpClient::getInstance(String ntpServerName = DEFAULT_NTP_SERVER) {
+	if (!instanceFlag) {
+		s_client = new ntpClient(ntpServerName);
+		instanceFlag = true;
+		return s_client;
+	} else {
+		s_client->setNtpServerName(ntpServerName);
+		//s_client->setUdpPort(udpPort);
+		return s_client;
+	}
+}
+
+time_t ntpClient::getTime() {
+	ntpClient *client = s_client;
+	
 	if (WiFi.status() == WL_CONNECTED) {
 #ifdef DEBUG
 		Serial.println("Starting UDP");
 #endif
-		_udp.begin(_udpPort);
+		s_client->_udp.begin(DEFAULT_NTP_PORT);
 #ifdef DEBUG
 		Serial.print("Local port: ");
-		Serial.println(_udp.localPort());
+		Serial.println(client->_udp.localPort());
 #endif
-		while (_udp.parsePacket() > 0); // discard any previously received packets
-		uint8_t dnsResult = WiFi.hostByName(_ntpServerName, _timeServerIP);
+		while (client->_udp.parsePacket() > 0); // discard any previously received packets
+		uint8_t dnsResult = WiFi.hostByName(client->_ntpServerName, client->_timeServerIP);
 #ifdef DEBUG
 		Serial.print("NTP Server hostname: ");
-		Serial.println(_ntpServerName);
+		Serial.println(client->_ntpServerName);
 		Serial.print("NTP Server IP address: ");
-		Serial.println(_timeServerIP);
+		Serial.println(client->_timeServerIP);
 		Serial.print("Result code: ");
 		Serial.print(dnsResult);
 		Serial.print(" ");
@@ -33,31 +52,31 @@ time_t ntpClient::getNtpTime2() {
 		Serial.println("-- Transmit NTP Request");
 #endif
 		if (dnsResult == 1) { //If DNS lookup resulted ok
-			sendNTPpacket(_timeServerIP);
+			client->sendNTPpacket(client->_timeServerIP);
 			uint32_t beginWait = millis();
 			while (millis() - beginWait < 1500) {
-				int size = _udp.parsePacket();
+				int size = client->_udp.parsePacket();
 				if (size >= NTP_PACKET_SIZE) {
 #ifdef DEBUG
 					Serial.println("-- Receive NTP Response");
 #endif
-					_udp.read(_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-					time_t timeValue = decodeNtpMessage(_ntpPacketBuffer);
-					setSyncInterval(/*NTP_SYNC_PERIOD*/86000);
+					client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+					time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
+					//setSyncInterval(/*NTP_SYNC_PERIOD*/86000);
 					Serial.println("Sync frequency set low");
-					_udp.stop();
+					client->_udp.stop();
 
 					return timeValue;
 				}
 			}
 			Serial.println("-- No NTP Response :-(");
-			_udp.stop();
+			client->_udp.stop();
 
 			return 0; // return 0 if unable to get the time 
 		}
 		else {
 			Serial.println("-- Invalid address :-((");
-			_udp.stop();
+			client->_udp.stop();
 
 			return 0; // return 0 if unable to get the time 
 		}
@@ -70,17 +89,8 @@ time_t ntpClient::getNtpTime2() {
 	}
 }
 
-ntpClient* ntpClient::Instance() {
-	//ntpClient* s_client = 0;
-	if (s_client == NULL) {
-		s_client = new ntpClient;
-		atexit(&DestroyNtpClient);
-	}
-	return s_client;
-}
-
-ntpClient::ntpClient(int udpPort, String ntpServerName) {
-	_udpPort = udpPort;
+ntpClient::ntpClient(String ntpServerName) {
+	_udpPort = DEFAULT_NTP_PORT;
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
 	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE);
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
@@ -90,6 +100,20 @@ ntpClient::ntpClient(int udpPort, String ntpServerName) {
 	_timeZone = DEFAULT_NTP_TIMEZONE;
 	s_client = this;
 }
+
+/*time_t ntpClient::getTimeProvider() {
+	return (s_client->getTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
+}
+
+/*boolean ntpClient::begin() {
+	setSyncProvider(s_client->getTimeProvider()); //NOT WORKING, FAIL TO COMPILE
+	//setSyncInterval(_interval); //TODO
+}
+
+boolean ntpClient::stop() {
+	setSyncProvider((time_t)0);
+	return true;
+}*/
 
 time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 	unsigned long secsSince1900;
@@ -111,22 +135,22 @@ void ntpClient::nullSyncProvider() {
 return this->getNtpTime();
 }*/
 
-/*String ntpClient::getTimeString() {
-String timeStr = "";
-timeStr += String(hour());
-timeStr += ":";
-timeStr += printDigits(minute());
-timeStr += ":";
-timeStr += printDigits(second());
-timeStr += " ";
-timeStr += printDigits(day());
-timeStr += "/";
-timeStr += printDigits(month());
-timeStr += "/";
-timeStr += String(year());
+String ntpClient::getTimeString() {
+	String timeStr = "";
+	timeStr += String(hour());
+	timeStr += ":";
+	timeStr += printDigits(minute());
+	timeStr += ":";
+	timeStr += printDigits(second());
+	timeStr += " ";
+	timeStr += printDigits(day());
+	timeStr += "/";
+	timeStr += printDigits(month());
+	timeStr += "/";
+	timeStr += String(year());
 
-return timeStr;
-}*/
+	return timeStr;
+}
 
 String ntpClient::printDigits(int digits) {
 	// utility for digital clock display: prints preceding colon and leading 0

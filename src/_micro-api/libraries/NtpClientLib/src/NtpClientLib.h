@@ -35,44 +35,17 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 class ntpClient {
 	
 public:
-	
-	ntpClient() {
-		ntpClient(DEFAULT_NTP_PORT, DEFAULT_NTP_SERVER);
-	}
 
-	ntpClient(int udpPort) {
-		ntpClient(udpPort, DEFAULT_NTP_SERVER);
-	}
+	static ntpClient* getInstance(String ntpServerName);
 
-	ntpClient(String ntpServerName) {
-		ntpClient(DEFAULT_NTP_PORT, ntpServerName);
-	}
+	//~ntpClient ();
 
-	ntpClient(int udpPort, String ntpServerName);
-	ntpClient(const ntpClient& s) {};
+	/*boolean begin(); //Starts NTP Sync
 
-	static ntpClient* Instance();
-	
+	boolean stop(); //Stops NTP Sync*/
 
-	virtual ~ntpClient() {};
-
-	static boolean begin() { //Starts NTP Sync
-		if (s_client != NULL) {
-			setSyncProvider(s_client->getNtpTime); //NOT WORKING, FAIL TO COMPILE
-			//setSyncInterval(_interval); //TODO
-			return true;
-		} else 
-			return false;
-	}
-	
-	static boolean stop() { //Stops NTP Sync
-		setSyncProvider(NULL);
-		return true;
-	}
-
-	time_t getNtpTime2(); //Starts a NTP time request to server. Returns a time in UNIX time format
-
-	//String getTimeString();
+	static time_t getTime();
+	String getTimeString();
 
 	boolean	setUdpPort(int port);
 	int		getUdpPort();
@@ -86,20 +59,13 @@ public:
 	boolean setTimeZone(int timeZone);
 	int getTimeZone();
 
-	static time_t getNtpTime() {
-		return (s_client->getNtpTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
-	}
-
 protected:
 	
-	
-	boolean sendNTPpacket(IPAddress &address);
-	time_t decodeNtpMessage(byte *messageBuffer);
 	void nullSyncProvider();
-	//time_t _getNtpTime();
+	//static time_t getTimeProvider();
 	String printDigits(int digits);
-
 	
+	//time_t getTime(); //Starts a NTP time request to server. Returns a time in UNIX time format
 
 private:
 
@@ -112,12 +78,13 @@ private:
 	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Bffer to store request and response messages
 	int _interval; //Interval to set periodic time sync
 
-	static ntpClient* s_client;
+	static bool instanceFlag;
+	static ntpClient *s_client;
 
-	static void DestroyNtpClient() {
-		if (s_client != NULL)
-			delete s_client;
-	}
+	boolean sendNTPpacket(IPAddress &address);
+	time_t decodeNtpMessage(byte *messageBuffer);
+
+	ntpClient(String ntpServerName);
 };
 
 #endif
