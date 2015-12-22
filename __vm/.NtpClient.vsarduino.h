@@ -5,7 +5,7 @@
 	        all non-arduino files created by visual micro and all visual studio project or solution files can be freely deleted and are not required to compile a sketch (do not delete your own code!).
 	        note: debugger breakpoints are stored in '.sln' or '.asln' files, knowledge of last uploaded breakpoints is stored in the upload.vmps.xml file. Both files are required to continue a previous debug session without needing to compile and upload again
 	
-	Hardware: Generic ESP8266 Module, Platform=esp8266, Package=esp8266
+	Hardware: Generic ESP8266 Module, Platform=esp8266, Package=esp8266com
 */
 
 #ifndef _VSARDUINO_H_
@@ -15,7 +15,7 @@
 #define __ets__
 #define ICACHE_FLASH
 #define F_CPU 80000000L
-#define ARDUINO 166
+#define ARDUINO 10605
 #define ARDUINO_ESP8266_ESP01
 #define ARDUINO_ARCH_ESP8266
 #define __cplusplus
