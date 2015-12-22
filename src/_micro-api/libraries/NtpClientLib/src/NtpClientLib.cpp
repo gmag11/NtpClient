@@ -32,7 +32,7 @@ time_t ntpClient::getNtpTime() {
 		Serial.println("-- Wifi Connected. Waiting for sync");
 		Serial.println("-- Transmit NTP Request");
 #endif
-		if (dnsResult != 0) {
+		if (dnsResult == 1) { //If DNS lookup resulted ok
 			sendNTPpacket(_timeServerIP);
 			uint32_t beginWait = millis();
 			while (millis() - beginWait < 1500) {
