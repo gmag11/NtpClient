@@ -30,8 +30,8 @@ time_t getTimeProvider() {
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(115200);
-	config.ssid = "Virus_Detected!!!"; // Your SSID
-	config.password = "LaJunglaSigloXX1@."; //Your WiFi Password
+	config.ssid = "Your SSID"; // Your SSID
+	config.password = "Your WiFi Password"; //Your WiFi Password
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
 	ntp = ntpClient::getInstance("es.pool.ntp.org");
 	setSyncProvider(getTimeProvider);
