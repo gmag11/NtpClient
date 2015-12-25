@@ -10,11 +10,12 @@
 
 //#define DEBUG //Uncomment this to enable debug messages over serial port
 
-#define NTP_TIME_SYNC
+#define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
+					  // This method is far less accurate and is not recommended
 
 #ifndef NTP_TIME_SYNC
-#define WEB_TIME_SYNC
-#endif
+#define WEB_TIME_SYNC // Web time sync method. Not reliable!!!
+#endif //NTP_TIME_SYNC
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -23,20 +24,22 @@
 #endif
 
 #include <Time2.h>
+#ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
 #ifdef NTP_TIME_SYNC
 #include <WiFiUdp.h>
 #endif // NTP_TIME_SYNC
+#endif // ARDUINO_ARCH_ESP8266
 
 //#include <Udp.h>
 
-#define DEFAULT_NTP_SERVER "pool.ntp.org"
-#define DEFAULT_NTP_PORT 123
-#define DEFAULT_NTP_INTERVAL 60
-#define DEFAULT_NTP_SHORTINTERVAL 15
-#define DEFAULT_NTP_TIMEZONE 1
+#define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
+#define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
+#define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes 
+#define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
+#define DEFAULT_NTP_TIMEZONE 1 // Select your local time offset. 0 if UTC time has to be used
 
-#define NTP_SERVER_NAME_SIZE 60
+#define NTP_SERVER_NAME_SIZE 60 // Max server name length
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
@@ -58,18 +61,27 @@ public:
 
 	//virtual ~ntpClient() {};
 
-	boolean begin(); //Starts NTP Sync
-
-	boolean stop(); //Stops NTP Sync
+	/**
+	* Starts time synchronization.
+	* @param[out] true if everything went ok.
+	*/
+	boolean begin();
 
 	/**
-	* Starts a NTP time request to server. Returns a time in UNIX time format
+	* Stops time synchronization.
+	* @param[out] True if everything went ok.
+	*/
+	boolean stop();
+
+	/**
+	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
+	* Kept in public section to allow direct NTP request.
 	* @param[out] Time in UNIX time format.
 	*/
-	static time_t getTime(); //Starts a NTP time request to server. Returns a time in UNIX time format
+	static time_t getTime();
 	
 	/**
-	* Convert current time to a String,
+	* Convert current time to a String.
 	* @param[out] String constructed from current time.
 	*/
 	String getTimeString();
@@ -77,22 +89,67 @@ public:
 	//boolean	setUdpPort(int port);
 	//int		getUdpPort();
 
+	/**
+	* Changes sync period.
+	* @param[in] New interval in seconds.
+	* @param[out] True if everything went ok.
+	*/
 	boolean setInterval(int interval);
+	
+	/**
+	* Changes sync period in sync'd and not sync'd status.
+	* @param[in] New interval while time is not adjusted in seconds.
+	* @param[in] New interval for normal operation in seconds.
+	* @param[out] True if everything went ok.
+	*/
 	boolean setInterval(int shortInterval, int longInterval);
-	int		getInterval();
-	int		getShortInterval();
-	int		getLongInterval();
 
+	/**
+	* Gets sync period.
+	* @param[out] Interval for normal operation in seconds.
+	*/
+	int		getInterval();
+	
+	/**
+	* Changes sync period not sync'd status.
+	* @param[out] Interval while time is not adjusted in seconds.
+	*/
+	int		getShortInterval();
+
+	/**
+	* Gets sync period.
+	* @param[out] Interval for normal operation in seconds.
+	*/
+	int getLongInterval() { return getInterval(); }
+
+	/**
+	* Sets NTP server name.
+	* @param[in] New NTP server name.
+	* @param[out] True if everything went ok.
+	*/
 	boolean	setNtpServerName(String ntpServerName);
+	
+	/**
+	* Gets NTP server name
+	* @param[out] NTP server name.
+	*/
 	String getNtpServerName();
 
+	/**
+	* Sets timezone.
+	* @param[in] New time offset in hours (-12 <= timeZone <= +12).
+	* @param[out] True if everything went ok.
+	*/
 	boolean setTimeZone(int timeZone);
+	
+	/**
+	* Gets timezone.
+	* @param[out] Time offset in hours (plus or minus).
+	*/
 	int getTimeZone();
 
 protected:
 	
-	//void nullSyncProvider();
-	//static time_t getTimeProvider();
 	String printDigits(int digits);
 	int _timeZone; //Local time zone. Added to NTP time
 	static bool instanceFlag; //Flag to control that instance has been created
@@ -108,7 +165,6 @@ protected:
 	ntpClient(String ntpServerName, int timeOffset);
 	
 	//static void DestroyNtpClient();
-	//time_t getTime(); 
 
 private:
 
@@ -116,7 +172,7 @@ private:
 	char _ntpServerName[NTP_SERVER_NAME_SIZE]; //NTP server name
 	IPAddress _timeServerIP; //NTP server IP address
 #ifdef WEB_TIME_SYNC
-	WiFiClient _webClient;
+	WiFiClient _webClient; // HTTP client
 #endif //WEB_TIME_SYNC
 
 #ifdef NTP_TIME_SYNC

@@ -339,10 +339,10 @@ int ntpClient::getShortInterval()
 	return _shortInterval;
 }
 
-int ntpClient::getLongInterval()
+/*int ntpClient::getLongInterval()
 {
 	return _longInterval;
-}
+}*/
 
 boolean ntpClient::setNtpServerName(String ntpServerName) {
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
