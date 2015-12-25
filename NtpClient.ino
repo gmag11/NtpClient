@@ -16,38 +16,37 @@ struct strConfig {
 	String password;
 } config;
 
+int i = 0;
 ntpClient *ntp;
 
-time_t getTimeProvider() {
-	if (ntp != NULL) {
-		return ntp->getTime();
-	} else {
-		Serial.println("ntp instance null");
-		return 0;
-	}
-}
 
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(115200);
-	config.ssid = "Your SSID"; // Your SSID
-	config.password = "Your WiFi Password"; //Your WiFi Password
+	config.ssid = "AndroidAP9802"; // Your SSID
+	config.password = "lanocheloca08."; //Your WiFi Password
+	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-	ntp = ntpClient::getInstance("es.pool.ntp.org");
-	setSyncProvider(getTimeProvider);
-	setSyncInterval(10);
-}
-
-void showTime() {
-	if (timeStatus() != timeNotSet)
-		Serial.println(ntp->getTimeString());
-	else
-		Serial.println("Time not set");
-	//showtime_flag = false;
+	ntp = ntpClient::getInstance("es.pool.ntp.org",1);
+	//ntp = ntpClient::getInstance("www.google.es", 1);
+	ntp->begin(); //Starts time synchronization
+	//ntp->setInterval(10,60);
+	//setSyncProvider(ntp->getTime);
+	//setSyncInterval(10);
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-	showTime();
+	Serial.print(i);
+	Serial.print(" ");
+	Serial.println(ntp->getTimeString());
 	delay(1000);
+	i++;
+	/*if (i == 60) {
+		ntp->setInterval(15);
+	}
+	if (i == 120) {
+		ntp->setNtpServerName("www.google.com");
+		ntp->setInterval(20);
+	}*/
 }

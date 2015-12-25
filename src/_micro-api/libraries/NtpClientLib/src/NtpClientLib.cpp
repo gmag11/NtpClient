@@ -14,21 +14,28 @@ ntpClient *ntpClient::s_client = NULL;
 
 extern ntpClient client;
 
-ntpClient *ntpClient::getInstance(String ntpServerName = DEFAULT_NTP_SERVER) {
+ntpClient *ntpClient::getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = 0) {
 	if (!instanceFlag) {
-		s_client = new ntpClient(ntpServerName);
+		s_client = new ntpClient(ntpServerName,timeOffset);
+		//atexit(&DestroyNtpClient);
 		instanceFlag = true;
 		return s_client;
 	} else {
 		s_client->setNtpServerName(ntpServerName);
+		s_client->setTimeZone(timeOffset);
 		//s_client->setUdpPort(udpPort);
 		return s_client;
 	}
 }
 
+/*void ntpClient::DestroyNtpClient() {
+	if (s_client != NULL) delete s_client;
+}*/
+
+#ifdef NTP_TIME_SYNC
 time_t ntpClient::getTime() {
 	ntpClient *client = s_client;
-	
+
 	if (WiFi.status() == WL_CONNECTED) {
 #ifdef DEBUG
 		Serial.println("Starting UDP");
@@ -50,7 +57,7 @@ time_t ntpClient::getTime() {
 		Serial.print(" ");
 		Serial.println("-- Wifi Connected. Waiting for sync");
 		Serial.println("-- Transmit NTP Request");
-#endif
+#endif //DEDUG
 		if (dnsResult == 1) { //If DNS lookup resulted ok
 			client->sendNTPpacket(client->_timeServerIP);
 			uint32_t beginWait = millis();
@@ -62,20 +69,26 @@ time_t ntpClient::getTime() {
 #endif
 					client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 					time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
-					//setSyncInterval(/*NTP_SYNC_PERIOD*/86000);
+					setSyncInterval(client->_longInterval);
+#ifdef DEBUG
 					Serial.println("Sync frequency set low");
+#endif // DEBUG
 					client->_udp.stop();
 
 					return timeValue;
 				}
 			}
+#ifdef DEBUG
 			Serial.println("-- No NTP Response :-(");
+#endif //DEBUG
 			client->_udp.stop();
 
 			return 0; // return 0 if unable to get the time 
 		}
 		else {
+#ifdef DEBUG
 			Serial.println("-- Invalid address :-((");
+#endif //DEBUG
 			client->_udp.stop();
 
 			return 0; // return 0 if unable to get the time 
@@ -89,31 +102,134 @@ time_t ntpClient::getTime() {
 	}
 }
 
-ntpClient::ntpClient(String ntpServerName) {
+#endif // NTP_TIME_SYNC
+
+#ifdef WEB_TIME_SYNC
+time_t ntpClient::getTime() {
+	ntpClient *client = s_client;
+	boolean error = false;
+
+	TimeElements time;
+	//WiFiClient webClient;
+
+	// Just choose any reasonably busy web server, the load is really low
+	Serial.print("Conectando "); Serial.println(client->_ntpServerName);
+	if (client->_webClient.connect(client->_ntpServerName, 80))
+	{
+		// Make an HTTP 1.1 request which is missing a Host: header
+		// compliant servers are required to answer with an error that includes
+		// a Date: header.
+		Serial.println("Conectado");
+		//PROGMEM const char HTTP_Request[]  = "GET / HTTP/1.1 \r\n\r\n";
+		client->_webClient.print(FPSTR(HTTP_Request));
+		//client.print(F("GET / HTTP/1.1 \r\n\r\n"));
+
+		char buf[5];			// temporary buffer for characters
+		client->_webClient.setTimeout(5000);
+		if (client->_webClient.find((char *)"\r\nDate: ") // look for Date: header
+			&& client->_webClient.readBytes(buf, 5) == 5) // discard
+		{
+			time.Day = client->_webClient.parseInt();	   // day
+			Serial.print("Day: "); Serial.println(time.Day);
+			client->_webClient.readBytes(buf, 1);	   // discard
+			client->_webClient.readBytes(buf, 3);	   // month
+			time.Month = 1;
+			Serial.print("Month: "); Serial.println(buf[0,3]);
+			time.Year = (int)(client->_webClient.parseInt() - 1970); 	   // year
+			Serial.print("Year: "); Serial.println(time.Year + 1970);
+			time.Hour = client->_webClient.parseInt();   // hour
+			time.Hour+=client->_timeZone; //Adjust time zone
+			Serial.print("Hour: "); Serial.println(time.Hour);
+			time.Minute = client->_webClient.parseInt(); // minute
+			Serial.print("Minute: "); Serial.println(time.Minute);
+			time.Second = client->_webClient.parseInt(); // second
+			Serial.print("Second: "); Serial.println(time.Second);
+
+			//	  int daysInPrevMonths;
+			switch (buf[0])
+			{
+			case 'F': time.Month = 2; break; // Feb
+			case 'S': time.Month = 9; break; // Sep
+			case 'O': time.Month = 10; break; // Oct
+			case 'N': time.Month = 11; break; // Nov
+			case 'D': time.Month = 12; break; // Dec
+			default:
+				if (buf[0] == 'J' && buf[1] == 'a')
+					time.Month = 1;		// Jan
+				else if (buf[0] == 'A' && buf[1] == 'p')
+					time.Month = 4;		// Apr
+				else switch (buf[2])
+				{
+				case 'r': time.Month = 3; break; // Mar
+				case 'y': time.Month = 5; break; // May
+				case 'n': time.Month = 6; break; // Jun
+				case 'l': time.Month = 7; break; // Jul
+				default: // add a default label here to avoid compiler warning
+				case 'g': time.Month = 8; break; // Aug
+				}
+			}
+
+		}
+		else {
+			Serial.println("Error datos");
+			error = true;
+		}
+
+	}
+	else {
+		Serial.println("Error");
+		error = true;
+	}
+	delay(10);
+	client->_webClient.flush();
+	client->_webClient.stop();
+	if (!error)
+		return makeTime(time);
+	else
+		return (0);
+}
+#endif // WEB_TIME_SYNC
+
+
+ntpClient::ntpClient(String ntpServerName,int timeOffset) {
 	_udpPort = DEFAULT_NTP_PORT;
-	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
-	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE);
+	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE); //Initialize ntp server name char[]
+	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE); //Initialize packet buffer[]
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
+#ifdef DEBUG
 	Serial.print("ntpClient instance created: ");
 	Serial.println(_ntpServerName);
-	_interval = DEFAULT_NTP_INTERVAL;
-	_timeZone = DEFAULT_NTP_TIMEZONE;
+#endif // DEBUG
+	_shortInterval = DEFAULT_NTP_SHORTINTERVAL;
+	_longInterval = DEFAULT_NTP_INTERVAL;
+	if (timeOffset >= -12 && timeOffset <= 12)
+		_timeZone = timeOffset;
+	else
+		_timeZone = 0;
 	s_client = this;
 }
 
 /*time_t ntpClient::getTimeProvider() {
 	return (s_client->getTime()); //NOT WORKING. s_client NOT DEFINED IN THIS SCOPE
-}
+}*/
 
-/*boolean ntpClient::begin() {
-	setSyncProvider(s_client->getTimeProvider()); //NOT WORKING, FAIL TO COMPILE
-	//setSyncInterval(_interval); //TODO
+boolean ntpClient::begin() {
+	setSyncProvider(getTime);
+	setSyncInterval(_shortInterval);
+#ifdef DEBUG
+	Serial.println("Time sync started");
+#endif // DEBUG
+	return true;
 }
 
 boolean ntpClient::stop() {
-	setSyncProvider((time_t)0);
+	setSyncProvider(NULL);
+#ifdef DEBUG
+	Serial.println("Time sync disabled");
+#endif // DEBUG
+
 	return true;
-}*/
+}
 
 time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 	unsigned long secsSince1900;
@@ -127,29 +243,29 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 	return secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
 }
 
-void ntpClient::nullSyncProvider() {
+/*void ntpClient::nullSyncProvider() {
 
-}
-
-/*time_t ntpClient::_getNtpTime() {
-return this->getNtpTime();
 }*/
 
 String ntpClient::getTimeString() {
-	String timeStr = "";
-	timeStr += String(hour());
-	timeStr += ":";
-	timeStr += printDigits(minute());
-	timeStr += ":";
-	timeStr += printDigits(second());
-	timeStr += " ";
-	timeStr += printDigits(day());
-	timeStr += "/";
-	timeStr += printDigits(month());
-	timeStr += "/";
-	timeStr += String(year());
+	if (timeStatus() != timeNotSet) {
+		String timeStr = "";
+		timeStr += String(hour());
+		timeStr += ":";
+		timeStr += printDigits(minute());
+		timeStr += ":";
+		timeStr += printDigits(second());
+		timeStr += " ";
+		timeStr += printDigits(day());
+		timeStr += "/";
+		timeStr += printDigits(month());
+		timeStr += "/";
+		timeStr += String(year());
 
-	return timeStr;
+		return timeStr;
+	} else {
+		return "Time not set";
+	}
 }
 
 String ntpClient::printDigits(int digits) {
@@ -164,7 +280,7 @@ String ntpClient::printDigits(int digits) {
 }
 
 
-boolean ntpClient::setUdpPort(int port)
+/*boolean ntpClient::setUdpPort(int port)
 {
 	if (port > 0 || port < 65535) {
 		_udpPort = port;
@@ -172,34 +288,69 @@ boolean ntpClient::setUdpPort(int port)
 	}
 	else
 		return false;
-}
+}*/
 
-int ntpClient::getUdpPort()
+/*int ntpClient::getUdpPort()
 {
 	return _udpPort;
-}
+}*/
 
 boolean ntpClient::setInterval(int interval)
 {
-	if (interval > 15) {
-		if (_interval != interval) {
-			_interval = interval;
-			setSyncInterval(_interval);
+	if (interval >= 10) {
+		if (_longInterval != interval) {
+			_longInterval = interval;
+#ifdef DEBUG
+			Serial.println("Sync interval set to " + interval);
+#endif // DEBUG
+			setSyncInterval(interval);
 		}
 		return true;
-	}
-	else
+	} else
 		return false;
 }
 
+boolean ntpClient::setInterval(int shortInterval, int longInterval) {
+	if (shortInterval >= 10 && _longInterval >= 10) {
+		_shortInterval = shortInterval;
+		_longInterval = longInterval;
+		if (timeStatus() == timeNotSet) {
+			setSyncInterval(shortInterval);
+		} else {
+			setSyncInterval(longInterval);
+		}
+#ifdef DEBUG
+		Serial.print("Short sync interval set to "); Serial.println(shortInterval);
+		Serial.print("Long sync interval set to "); Serial.println(longInterval);
+#endif // DEBUG
+		return true;
+	} else
+		return false;
+}
+
+
 int ntpClient::getInterval()
 {
-	return _interval;
+	return _longInterval;
+}
+
+int ntpClient::getShortInterval()
+{
+	return _shortInterval;
+}
+
+int ntpClient::getLongInterval()
+{
+	return _longInterval;
 }
 
 boolean ntpClient::setNtpServerName(String ntpServerName) {
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
+#ifdef DEBUG
+	Serial.println("NTP server set to " + ntpServerName);
+#endif // DEBUG
+
 	return true;
 }
 
@@ -212,6 +363,10 @@ boolean ntpClient::setTimeZone(int timeZone)
 {
 	if (timeZone >= -13 || timeZone <= 13) {
 		_timeZone = timeZone;
+#ifdef DEBUG
+		Serial.println("Time zone set to " + _timeZone);
+#endif // DEBUG
+
 		return true;
 	}
 	else
@@ -223,6 +378,7 @@ int ntpClient::getTimeZone()
 	return _timeZone;
 }
 
+#ifdef NTP_TIME_SYNC
 // send an NTP request to the time server at the given address
 boolean ntpClient::sendNTPpacket(IPAddress &address) {
 	// set all bytes in the buffer to 0
@@ -245,4 +401,6 @@ boolean ntpClient::sendNTPpacket(IPAddress &address) {
 	_udp.endPacket();
 	return true;
 }
+
+#endif // NTP_TIME_SYNC
 
