@@ -23,7 +23,7 @@
 	#include "WProgram.h"
 #endif
 
-#include <Time2.h> // Renamed from Time.h due to incompatibility with ESP8266 Arduino environment.
+#include <Time2.h> // Renamed from Time.h due to incompatibility with ESP8266 Arduino environment. See https://github.com/esp8266/Arduino/issues/1203
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
 #ifdef NTP_TIME_SYNC

@@ -10,6 +10,7 @@
 #include <Time2.h>
 #include <ESP8266WiFi.h>
 #include "NtpClientLib.h"
+#include "WifiConfig.h"
 
 struct strConfig {
 	String ssid;
@@ -23,8 +24,8 @@ ntpClient *ntp;
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(115200);
-	config.ssid = "AndroidAP9802"; // Your SSID
-	config.password = "lanocheloca08."; //Your WiFi Password
+	config.ssid = YOUR_WIFI_SSID; // Your SSID
+	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
 	ntp = ntpClient::getInstance();

@@ -101,4 +101,5 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <..\NTPClient\NtpClient.ino>
 #include <src\_micro-api\libraries\NtpClientLib\src\NtpClientLib.cpp>
 #include <src\_micro-api\libraries\NtpClientLib\src\NtpClientLib.h>
+#include <..\NTPClient\WifiConfig.h>
 #endif
