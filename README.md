@@ -12,4 +12,4 @@ ntpClient class is implemented following singleton structure so you don't have t
 
 ~~This is a preliminary version. I'd like to do sync provider registering in a begin() member funcion but I've been not able to do it until now. I need a static function for that so I am not sure if I can do it from begin function or I have to make the registration in my main code.~~
 
-ntpClient.ino is an example of how this libary work. It shows time every second as soon it is synchronized.
+ntpClient.ino is an example of how this library works. It shows time every second as soon it is synchronized.
