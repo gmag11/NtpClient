@@ -14,7 +14,7 @@ ntpClient *ntpClient::s_client = NULL;
 
 extern ntpClient client;
 
-ntpClient *ntpClient::getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = 0) {
+ntpClient *ntpClient::getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE) {
 	if (!instanceFlag) {
 		s_client = new ntpClient(ntpServerName,timeOffset);
 		//atexit(&DestroyNtpClient);

@@ -27,12 +27,11 @@ void setup() {
 	config.password = "lanocheloca08."; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-	ntp = ntpClient::getInstance("es.pool.ntp.org",1);
-	//ntp = ntpClient::getInstance("www.google.es", 1);
+	ntp = ntpClient::getInstance();
+	//ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
+	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York
+	ntp->setInterval(15, 1800); // OPTIONAL. Set sync interval
 	ntp->begin(); //Starts time synchronization
-	//ntp->setInterval(10,60);
-	//setSyncProvider(ntp->getTime);
-	//setSyncInterval(10);
 }
 
 // the loop function runs over and over again until power down or reset
@@ -42,11 +41,4 @@ void loop() {
 	Serial.println(ntp->getTimeString());
 	delay(1000);
 	i++;
-	/*if (i == 60) {
-		ntp->setInterval(15);
-	}
-	if (i == 120) {
-		ntp->setNtpServerName("www.google.com");
-		ntp->setInterval(20);
-	}*/
 }
