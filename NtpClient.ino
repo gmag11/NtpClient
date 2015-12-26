@@ -10,7 +10,7 @@
 #include <Time2.h>
 #include <ESP8266WiFi.h>
 #include "NtpClientLib.h"
-#include "WifiConfig.h"
+#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD)
 
 struct strConfig {
 	String ssid;

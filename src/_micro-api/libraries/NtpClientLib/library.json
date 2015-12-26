@@ -1,0 +1,19 @@
+{
+"name": "NtpClient",
+"frameworks": "Arduino, esp8266",
+"keywords": "Time, date, hour, minute, second, day, week, month, year, RTC, NTP",
+"description": "Library to get system sync from a NTP server",
+"url": "https://github.com/gmag11/NtpClient",
+"authors":
+[
+{
+        "name": "Germán Martín"
+}
+],
+"repository":
+{
+    "type": "git",
+    "url": "https://github.com/gmag11/NtpClient"
+}
+}
+

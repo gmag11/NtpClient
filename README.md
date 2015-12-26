@@ -5,8 +5,9 @@ This is a NTP library to be able to get time from NTP server with my ESP8266s. I
 
 Using the library is fairly easy. You only need to create an instance giving host name. You may use default values by using getInstance() without parameters. Then you neet to start synchronization using begin() funcion. Some parameters can be adjusted: server, sync frequency, time offset.
 
-This library makes use of [Time] library. I had to rename it to Time2.h due to a file named time.h already existing in Arduino ESP8266 environment. 
+This library makes use of [Time] library v1.4.0 (using v1.5.0 you get a compile error). I had to rename it to Time2.h due to a file named time.h already existing in Arduino ESP8266 environment. See my post [here]. 
 [Time]: http://www.pjrc.com/teensy/td_libs_Time.html
+[here]: https://github.com/esp8266/Arduino/issues/1203
 
 ntpClient class is implemented following singleton structure so you don't have to run constructor but getInstance() instead. Thanks to Mikael Patel for his recommendation to do it so. See [this message].
 [this message]: http://arduino.stackexchange.com/questions/18825/ntp-client-library-set-sync-provider-pointing-to-public-class-function-possibl

@@ -1,8 +1,11 @@
 /*
- Name:		NtpClientLib.h
+ Name:		NtpClientLib
  Created:	21/12/2015 16:26:34
- Author:	gmag11@gmail.com
+ Author:	Germán Martín (gmag11@gmail.com)
+ Maintainer:Germán Martín (gmag11@gmail.com)
  Editor:	http://www.visualmicro.com
+
+ Library to get system sync from a NTP server
 */
 
 #ifndef _NtpClientLib_h
@@ -17,19 +20,21 @@
 #define WEB_TIME_SYNC // Web time sync method. Not reliable!!!
 #endif //NTP_TIME_SYNC
 
+
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else
 	#include "WProgram.h"
 #endif
 
-#include <Time2.h> // Renamed from Time.h due to incompatibility with ESP8266 Arduino environment. See https://github.com/esp8266/Arduino/issues/1203
-#ifdef ARDUINO_ARCH_ESP8266
+#include <Time2.h> // Renamed from Time.h due to incompatibility with ESP8266 Arduino environment. 
+				   // See https://github.com/esp8266/Arduino/issues/1203
+#ifdef __ESP8266_ESP8266__
 #include <ESP8266WiFi.h>
 #ifdef NTP_TIME_SYNC
 #include <WiFiUdp.h>
 #endif // NTP_TIME_SYNC
-#endif // ARDUINO_ARCH_ESP8266
+#endif // __ESP8266_ESP8266__
 
 //#include <Udp.h>
 
