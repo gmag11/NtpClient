@@ -9,20 +9,21 @@
 
 //NTPClient ntpClient;
 
-bool ntpClient::instanceFlag = false;
+boolean ntpClient::instanceFlag = false;
 ntpClient *ntpClient::s_client = NULL;
 
 extern ntpClient client;
 
-ntpClient *ntpClient::getInstance(String ntpServerName, int timeOffset) {
+ntpClient *ntpClient::getInstance(String ntpServerName, int timeOffset, boolean daylight) {
 	if (!instanceFlag) {
-		s_client = new ntpClient(ntpServerName,timeOffset);
+		s_client = new ntpClient(ntpServerName,timeOffset,daylight);
 		//atexit(&DestroyNtpClient);
 		instanceFlag = true;
 		return s_client;
 	} else {
 		s_client->setNtpServerName(ntpServerName);
 		s_client->setTimeZone(timeOffset);
+		s_client->setDayLight(daylight);
 		//s_client->setUdpPort(udpPort);
 		return s_client;
 	}
@@ -191,7 +192,7 @@ time_t ntpClient::getTime() {
 #endif // WEB_TIME_SYNC
 
 
-ntpClient::ntpClient(String ntpServerName,int timeOffset) {
+ntpClient::ntpClient(String ntpServerName, int timeOffset, boolean daylight) {
 	_udpPort = DEFAULT_NTP_PORT;
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE); //Initialize ntp server name char[]
 	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE); //Initialize packet buffer[]
@@ -206,6 +207,7 @@ ntpClient::ntpClient(String ntpServerName,int timeOffset) {
 		_timeZone = timeOffset;
 	else
 		_timeZone = 0;
+	_daylight = daylight;
 	s_client = this;
 }
 
@@ -240,7 +242,19 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 	secsSince1900 |= (unsigned long)messageBuffer[43];
 
 #define SEVENTY_YEARS 2208988800UL
-	return secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
+	time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
+
+	if (summertime(year(timeTemp), month(timeTemp), day(timeTemp), hour(timeTemp), _timeZone)) {
+		timeTemp += SECS_PER_HOUR;
+#ifdef DEBUG
+		Serial.println("Summer Time");
+	}
+	else {
+		Serial.println("Winter Time");
+#endif // DEBUG
+	}
+
+	return timeTemp;
 }
 
 /*void ntpClient::nullSyncProvider() {
@@ -339,6 +353,16 @@ int ntpClient::getShortInterval()
 	return _shortInterval;
 }
 
+void ntpClient::setDayLight(boolean daylight)
+{
+	this->_daylight = daylight;
+}
+
+boolean ntpClient::getDayLight()
+{
+	return this->_daylight;
+}
+
 /*int ntpClient::getLongInterval()
 {
 	return _longInterval;
@@ -378,6 +402,20 @@ int ntpClient::getTimeZone()
 	return _timeZone;
 }
 
+//
+// Summertime calculates the daylight saving for a given date.
+//
+boolean ntpClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
+// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
+{
+	if (month<3 || month>10) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+	if (month>3 && month<10) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+	if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day)<(1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+		return true;
+	else
+		return false;
+}
+
 #ifdef NTP_TIME_SYNC
 // send an NTP request to the time server at the given address
 boolean ntpClient::sendNTPpacket(IPAddress &address) {
@@ -401,6 +439,5 @@ boolean ntpClient::sendNTPpacket(IPAddress &address) {
 	_udp.endPacket();
 	return true;
 }
-
 #endif // NTP_TIME_SYNC
 

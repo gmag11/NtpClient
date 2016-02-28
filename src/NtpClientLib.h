@@ -11,7 +11,7 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG //Uncomment this to enable debug messages over serial port
+#define DEBUG //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
 					  // This method is far less accurate and is not recommended
@@ -27,8 +27,13 @@
 	#include "WProgram.h"
 #endif
 
-#include <Time2.h> // Renamed from Time.h due to incompatibility with ESP8266 Arduino environment. 
-				   // See https://github.com/esp8266/Arduino/issues/1203
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+//#include <Time.h> // Do not use Time.h due to incompatibility with ESP8266 Arduino environment. 
+					// See https://github.com/esp8266/Arduino/issues/1203
+					// Use TimeLib.h instead
+#include <TimeLib.h>
+
 #ifdef __ESP8266_ESP8266__
 #include <ESP8266WiFi.h>
 #ifdef NTP_TIME_SYNC
@@ -62,7 +67,7 @@ public:
 	* @param[in] Time offset from UTC.
 	* @param[out] Pointer to ntpClient instance
 	*/
-	static ntpClient* getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE);
+	static ntpClient* getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false);
 
 	//virtual ~ntpClient() {};
 
@@ -128,6 +133,18 @@ public:
 	int		getLongInterval() { return getInterval(); }
 
 	/**
+	* Set daylight time saving option.
+	* @param[in] true is daylight time savings apply.
+	*/
+	void setDayLight(boolean daylight);
+
+	/**
+	* Get daylight time saving option.
+	* @param[out] true is daylight time savings apply.
+	*/
+	boolean getDayLight();
+
+	/**
 	* Sets NTP server name.
 	* @param[in] New NTP server name.
 	* @param[out] True if everything went ok.
@@ -163,17 +180,20 @@ protected:
 	String printDigits(int digits);
 
 	int _timeZone; //Local time zone. Added to NTP time
-	static bool instanceFlag; //Flag to control that instance has been created
+	boolean _daylight; //Does this time zone have daylight saving?
+	static boolean instanceFlag; //Flag to control that instance has been created
 	static ntpClient *s_client; //pointer to this instance
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
+
+	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
 	/**
 	* Construct NTP client to given server name.
 	* @param[in] NTP server name as String.
 	* @param[in] Time offset from UTC.
 	*/
-	ntpClient(String ntpServerName, int timeOffset);
+	ntpClient(String ntpServerName, int timeOffset, boolean daylight);
 	
 	//static void DestroyNtpClient();
 

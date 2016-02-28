@@ -7,7 +7,7 @@
 
 
 //#include <WiFiUdp.h>
-#include <Time2.h>
+#include <TimeLib.h>
 #include <ESP8266WiFi.h>
 #include "NtpClientLib.h"
 #include "WifiConfig.h" // Wifi configuration (SSID + PASSWD)
@@ -28,8 +28,8 @@ void setup() {
 	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-	ntp = ntpClient::getInstance();
-	//ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
+	//ntp = ntpClient::getInstance();
+	ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
 	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York
 	ntp->setInterval(15, 1800); // OPTIONAL. Set sync interval
 	ntp->begin(); //Starts time synchronization
