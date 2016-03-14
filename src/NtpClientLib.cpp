@@ -75,7 +75,8 @@ time_t ntpClient::getTime() {
 					Serial.println("Sync frequency set low");
 #endif // DEBUG
 					client->_udp.stop();
-
+					client->_lastSyncd = timeValue;
+					Serial.println(client->getTimeString(client->_lastSyncd));
 					return timeValue;
 				}
 			}
@@ -208,6 +209,7 @@ ntpClient::ntpClient(String ntpServerName, int timeOffset, boolean daylight) {
 	else
 		_timeZone = 0;
 	_daylight = daylight;
+	_lastSyncd = 0;
 	s_client = this;
 }
 
@@ -261,25 +263,58 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 
 }*/
 
-String ntpClient::getTimeString() {
-	if (timeStatus() != timeNotSet) {
+String ntpClient::getTimeStr(time_t moment) {
+	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
-		timeStr += String(hour());
+		timeStr += printDigits(hour(moment));
 		timeStr += ":";
-		timeStr += printDigits(minute());
+		timeStr += printDigits(minute(moment));
 		timeStr += ":";
-		timeStr += printDigits(second());
+		timeStr += printDigits(second(moment));
+
+		return timeStr;
+	}
+	else return "Time not set";
+}
+
+String ntpClient::getTimeStr() {
+	return this->getTimeStr(now());
+}
+
+String ntpClient::getDateStr(time_t moment) {
+	if ((timeStatus() != timeNotSet) || (moment != 0)) {
+		String timeStr = "";
+		
+		timeStr += printDigits(day(moment));
+		timeStr += "/";
+		timeStr += printDigits(month(moment));
+		timeStr += "/";
+		timeStr += String(year(moment));
+
+		return timeStr;
+	}
+	else return "Date not set";
+}
+
+String ntpClient::getDateStr() {
+	return this->getDateStr(now());
+}
+
+String ntpClient::getTimeString(time_t moment) {
+	if ((timeStatus() != timeNotSet) || (moment != 0)) {
+		String timeStr = "";
+		timeStr += this->getTimeStr(moment);
 		timeStr += " ";
-		timeStr += printDigits(day());
-		timeStr += "/";
-		timeStr += printDigits(month());
-		timeStr += "/";
-		timeStr += String(year());
+		timeStr += this->getDateStr(moment);
 
 		return timeStr;
 	} else {
 		return "Time not set";
 	}
+}
+
+String ntpClient::getTimeString() {
+	return this->getTimeString(now());
 }
 
 String ntpClient::printDigits(int digits) {
@@ -441,3 +476,6 @@ boolean ntpClient::sendNTPpacket(IPAddress &address) {
 }
 #endif // NTP_TIME_SYNC
 
+time_t ntpClient::getLastNTPSync() {
+	return _lastSyncd;
+}

@@ -11,7 +11,7 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-#define DEBUG //Uncomment this to enable debug messages over serial port
+//#define DEBUG //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
 					  // This method is far less accurate and is not recommended
@@ -94,7 +94,15 @@ public:
 	* Convert current time to a String.
 	* @param[out] String constructed from current time.
 	*/
+
+	String getTimeStr();
+	String getTimeStr(time_t moment);
+
+	String getDateStr();
+	String getDateStr(time_t moment);
+
 	String getTimeString();
+	String getTimeString(time_t moment);
 
 	//boolean	setUdpPort(int port);
 	//int		getUdpPort();
@@ -170,6 +178,8 @@ public:
 	*/
 	int getTimeZone();
 
+	time_t getLastNTPSync();
+
 protected:
 	
 	/**
@@ -185,6 +195,7 @@ protected:
 	static ntpClient *s_client; //pointer to this instance
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
+	time_t _lastSyncd;
 
 	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
