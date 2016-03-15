@@ -5,12 +5,20 @@
  Editor:	http://www.visualmicro.com
 */
 
+//#define EXT_WIFI_CONFIG_H
 
 //#include <WiFiUdp.h>
 #include <TimeLib.h>
 #include <ESP8266WiFi.h>
-#include "NtpClientLib.h"
-#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD)
+#include <NtpClientLib.h>
+#ifdef EXT_WIFI_CONFIG_H
+#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
+#endif // EXT_WIFI_CONFIG_H
+
+#ifndef EXT_WIFI_CONFIG_H
+#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
+#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
+#endif // !EXT_WIFI_CONFIG_H
 
 struct strConfig {
 	String ssid;
