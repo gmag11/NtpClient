@@ -76,7 +76,9 @@ time_t ntpClient::getTime() {
 #endif // DEBUG
 					client->_udp.stop();
 					client->_lastSyncd = timeValue;
-					Serial.println(client->getTimeString(client->_lastSyncd));
+#ifdef DEBUG
+					Serial.printf("Succeccful NTP sync at %s", client->getTimeString(client->_lastSyncd));
+#endif // DEBUG
 					return timeValue;
 				}
 			}

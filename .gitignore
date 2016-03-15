@@ -211,3 +211,7 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 WifiConfig.h
+*.vcxproj
+src/examples/NTPClient/__vm/
+*.filters
+*.sln

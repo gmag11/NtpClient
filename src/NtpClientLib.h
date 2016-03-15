@@ -14,7 +14,7 @@
 //#define DEBUG //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
-					  // This method is far less accurate and is not recommended
+					  // That method is far less accurate and is not recommended. NTP is always preferred
 
 #ifndef NTP_TIME_SYNC
 #define WEB_TIME_SYNC // Web time sync method. Not reliable!!!
@@ -93,15 +93,46 @@ public:
 	/**
 	* Convert current time to a String.
 	* @param[out] String constructed from current time.
+	* TODO: Add internationalization support
 	*/
-
 	String getTimeStr();
+	
+	/**
+	* Convert a time in UNIX format to a String representing time.
+	* @param[out] String constructed from current time.
+	* @param[in] time_t object to convert to extract time.
+	* TODO: Add internationalization support
+	*/
 	String getTimeStr(time_t moment);
 
+	/**
+	* Convert current date to a String.
+	* @param[out] String constructed from current date.
+	* TODO: Add internationalization support
+	*/
 	String getDateStr();
+
+	/**
+	* Convert a time in UNIX format to a String representing its date.
+	* @param[out] String constructed from current date.
+	* @param[in] time_t object to convert to extract date.
+	* TODO: Add internationalization support
+	*/
 	String getDateStr(time_t moment);
 
+	/**
+	* Convert current time and date to a String.
+	* @param[out] String constructed from current time.
+	* TODO: Add internationalization support
+	*/
 	String getTimeString();
+
+	/**
+	* Convert current time and date to a String.
+	* @param[out] String constructed from current time.
+	* @param[in] time_t object to convert to String.
+	* TODO: Add internationalization support
+	*/
 	String getTimeString(time_t moment);
 
 	//boolean	setUdpPort(int port);
@@ -178,6 +209,10 @@ public:
 	*/
 	int getTimeZone();
 
+	/**
+	* Gets last successful sync time in UNIX format.
+	* @param[out] Last successful sync time. 0 equals never.
+	*/
 	time_t getLastNTPSync();
 
 protected:
@@ -195,7 +230,7 @@ protected:
 	static ntpClient *s_client; //pointer to this instance
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
-	time_t _lastSyncd;
+	time_t _lastSyncd; //Stored time of last successful sync
 
 	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
