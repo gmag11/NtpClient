@@ -7,6 +7,7 @@
 
 #include "NtpClientLib.h"
 
+#ifdef ARDUINO_ARCH_ESP8266
 //NTPClient ntpClient;
 
 boolean ntpClient::instanceFlag = false;
@@ -481,3 +482,5 @@ boolean ntpClient::sendNTPpacket(IPAddress &address) {
 time_t ntpClient::getLastNTPSync() {
 	return _lastSyncd;
 }
+
+#endif //ARDUINO_ARCH_ESP8266

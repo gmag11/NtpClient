@@ -5,11 +5,15 @@
  Editor:	http://www.visualmicro.com
 */
 
-//#define EXT_WIFI_CONFIG_H
+//#define EXT_WIFI_CONFIG_H //Uncomment to enable WiFi credentials external header file storage.
 
 //#include <WiFiUdp.h>
 #include <TimeLib.h>
+
+#ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
+#endif // ARDUINO_ARCH_ESP8266
+
 #include <NtpClientLib.h>
 #ifdef EXT_WIFI_CONFIG_H
 #include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file

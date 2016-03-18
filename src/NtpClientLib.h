@@ -11,6 +11,8 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
+#ifdef ARDUINO_ARCH_ESP8266
+
 //#define DEBUG //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
@@ -275,6 +277,11 @@ private:
 	time_t decodeNtpMessage(byte *messageBuffer);
 
 };
+
+#endif // ARDUINO_ARCH_ESP8266
+
+#else
+#error “This library only supports ESP8266 based boards.”
 
 #endif // _NtpClientLib_h
 
