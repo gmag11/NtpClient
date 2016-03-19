@@ -6,6 +6,17 @@
 */
 
 //#define EXT_WIFI_CONFIG_H //Uncomment to enable WiFi credentials external header file storage.
+   						  // Used to not publish your own wifi keys in main code
+/* WifiConfig.h example
+#pragma once
+#ifndef WIFI_CONFIG_H
+#define WIFI_CONFIG_H
+
+#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
+#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
+
+#endif //WIFI_CONFIG_H
+*/
 
 //#include <WiFiUdp.h>
 #include <TimeLib.h>
