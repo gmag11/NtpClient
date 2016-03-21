@@ -5,8 +5,14 @@
  Editor:	http://www.visualmicro.com
 */
 
+
+
+//#include <WiFiUdp.h>
+#include <TimeLib.h>
+
+#ifdef ARDUINO_ARCH_ESP8266
 //#define EXT_WIFI_CONFIG_H //Uncomment to enable WiFi credentials external header file storage.
-   						  // Used to not publish your own wifi keys in main code
+// Used to not publish your own wifi keys in main code
 /* WifiConfig.h example
 #pragma once
 #ifndef WIFI_CONFIG_H
@@ -17,18 +23,7 @@
 
 #endif //WIFI_CONFIG_H
 */
-
-//#include <WiFiUdp.h>
-#include <TimeLib.h>
-
-#ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
-#endif // ARDUINO_ARCH_ESP8266
-
-#include <NtpClientLib.h>
-#ifdef EXT_WIFI_CONFIG_H
-#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
-#endif // EXT_WIFI_CONFIG_H
 
 #ifndef EXT_WIFI_CONFIG_H
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
@@ -40,6 +35,16 @@ struct strConfig {
 	String password;
 } config;
 
+#ifdef EXT_WIFI_CONFIG_H
+#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
+#endif // EXT_WIFI_CONFIG_H
+
+#endif // ARDUINO_ARCH_ESP8266
+
+#include <NtpClientLib.h>
+
+
+
 int i = 0;
 ntpClient *ntp;
 
@@ -47,16 +52,19 @@ ntpClient *ntp;
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(115200);
+#ifdef ARDUINO_ARCH_ESP8266
 	config.ssid = YOUR_WIFI_SSID; // Your SSID
 	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
+#endif // ARDUINO_ARCH_ESP8266
 	//ntp = ntpClient::getInstance();
 	ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
 	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York
 	ntp->setInterval(15, 1800); // OPTIONAL. Set sync interval
 	ntp->begin(); //Starts time synchronization
 }
+
 
 // the loop function runs over and over again until power down or reset
 void loop() {
