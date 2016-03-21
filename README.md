@@ -16,6 +16,7 @@ You don't need anything more. Time update is managed inside library so, after `b
 Update frequency is higher (every some seconds) until 1st successful sync is achieved. Since then, yout own (or default) adjusted period applies. There is a way to adjust this first period if needed.
 ##Example
 
+<!-- language: c -->
     #include <TimeLib.h>
     
     #ifdef ARDUINO_ARCH_ESP8266
