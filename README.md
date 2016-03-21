@@ -16,7 +16,7 @@ You don't need anything more. Time update is managed inside library so, after `b
 Update frequency is higher (every some seconds) until 1st successful sync is achieved. Since then, yout own (or default) adjusted period applies. There is a way to adjust this first period if needed.
 ##Example
 
-<!-- language: c -->
+```Arduino
     #include <TimeLib.h>
     
     #ifdef ARDUINO_ARCH_ESP8266
@@ -48,6 +48,7 @@ Update frequency is higher (every some seconds) until 1st successful sync is ach
     	delay(1000);
     	i++;
     }
+```
 
 ##Performance
 Don't expect atomic-clock-like precission. This library does not take network delay into account neither uses all NTP mechanisms available to improve accuracy. It is in the range of 1 to 2 seconds. Enough for most projects.
