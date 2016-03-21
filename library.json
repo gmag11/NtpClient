@@ -1,5 +1,5 @@
 {
-"name": "NtpClient",
+"name": "NtpClientLib",
 "frameworks": "esp8266",
 "keywords": "Time, date, hour, minute, second, day, week, month, year, RTC, NTP",
 "description": "Library to get system sync from a NTP server",
@@ -7,8 +7,7 @@
 "authors":
 [
 {
-        "name": "Germ·n MartÌn"
-        "email": "gmag11@gmail.com"
+        "name": "Germ√°n Mart√≠n"
 }
 ],
 "repository":
