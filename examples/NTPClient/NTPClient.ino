@@ -8,6 +8,7 @@
 
 
 //#include <WiFiUdp.h>
+
 #include <TimeLib.h>
 
 #ifdef ARDUINO_ARCH_ESP8266
@@ -39,6 +40,16 @@ struct strConfig {
 #include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
 #endif // EXT_WIFI_CONFIG_H
 
+#elif defined (ARDUINO_ARCH_AVR)
+#include <EthernetUdp.h>
+#include <Ethernet.h>
+#include <Dhcp.h>
+
+// Enter a MAC address for your controller below.
+// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+byte mac[] = {
+	0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+};
 #endif // ARDUINO_ARCH_ESP8266
 
 #include <NtpClientLib.h>
@@ -57,7 +68,15 @@ void setup() {
 	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(config.ssid.c_str(), config.password.c_str());
+#elif defined(ARDUINO_ARCH_AVR)
+	if (Ethernet.begin(mac) == 0) {
+		Serial.println("Failed to configure Ethernet using DHCP");
+		// no point in carrying on, so do nothing forevermore:
+		for (;;)
+			;
+	}
 #endif // ARDUINO_ARCH_ESP8266
+	
 	//ntp = ntpClient::getInstance();
 	ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
 	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York

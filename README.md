@@ -7,7 +7,7 @@ In a device like ESP8266 or any Internet connected Arduino having NTP synchroniz
 
 So I decided to do my own NTP client libary to sync ESP8266 time via WiFi using Arduino IDE.
 ##Description
-This is a NTP library to be able to get time from NTP server with my ESP8266s. It does not support regular Arduino yet. Feel free to adapt it. Anyway I'll try to.
+This is a NTP library to be able to get time from NTP server with my ESP8266s. Initial support for regular Arduino is available. Please test it and inform via GitHub.
 
 Using the library is fairly easy. You only need to create an instance giving host name. You may use default values by using `getInstance()` without parameters. Then you can start synchronization using `begin()` funcion. Some parameters can be adjusted: server, sync frequency, time offset.
 

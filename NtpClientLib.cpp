@@ -7,9 +7,6 @@
 
 #include "NtpClientLib.h"
 
-#ifdef ARDUINO_ARCH_ESP8266
-//NTPClient ntpClient;
-
 boolean ntpClient::instanceFlag = false;
 ntpClient *ntpClient::s_client = NULL;
 
@@ -35,6 +32,7 @@ ntpClient *ntpClient::getInstance(String ntpServerName, int timeOffset, boolean 
 }*/
 
 #ifdef NTP_TIME_SYNC
+#if NETWORK_TYPE == NETWORK_ESP8266
 time_t ntpClient::getTime() {
 	ntpClient *client = s_client;
 
@@ -106,6 +104,76 @@ time_t ntpClient::getTime() {
 		return 0;
 	}
 }
+#endif //NETWORK_TYPE == ESP8266
+
+#if NETWORK_TYPE == NETWORK_W5100
+time_t ntpClient::getTime() {
+	ntpClient *client = s_client;
+	DNSClient dns;
+
+#ifdef DEBUG
+	Serial.println("Starting UDP");
+#endif
+	s_client->_udp.begin(DEFAULT_NTP_PORT);
+#ifdef DEBUG
+	Serial.print("Local port: ");
+	Serial.println(client->_udp.localPort());
+#endif
+	while (client->_udp.parsePacket() > 0); // discard any previously received packets
+	dns.begin(Ethernet.dnsServerIP());
+	uint8_t dnsResult = dns.getHostByName(client->_ntpServerName, client->_timeServerIP);
+#ifdef DEBUG
+	Serial.print("NTP Server hostname: ");
+	Serial.println(client->_ntpServerName);
+	Serial.print("NTP Server IP address: ");
+	Serial.println(client->_timeServerIP);
+	Serial.print("Result code: ");
+	Serial.print(dnsResult);
+	Serial.print(" ");
+	Serial.println("-- Wifi Connected. Waiting for sync");
+	Serial.println("-- Transmit NTP Request");
+#endif //DEDUG
+	if (dnsResult == 1) { //If DNS lookup resulted ok
+		client->sendNTPpacket(client->_timeServerIP);
+		uint32_t beginWait = millis();
+		while (millis() - beginWait < 1500) {
+			int size = client->_udp.parsePacket();
+			if (size >= NTP_PACKET_SIZE) {
+#ifdef DEBUG
+				Serial.println("-- Receive NTP Response");
+#endif
+				client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+				time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
+				setSyncInterval(client->_longInterval);
+#ifdef DEBUG
+				Serial.println("Sync frequency set low");
+#endif // DEBUG
+				client->_udp.stop();
+				client->_lastSyncd = timeValue;
+#ifdef DEBUG
+				Serial.printf("Succeccful NTP sync at %s", client->getTimeString(client->_lastSyncd));
+#endif // DEBUG
+				return timeValue;
+			}
+		}
+#ifdef DEBUG
+		Serial.println("-- No NTP Response :-(");
+#endif //DEBUG
+		client->_udp.stop();
+
+		return 0; // return 0 if unable to get the time 
+	}
+	else {
+#ifdef DEBUG
+		Serial.println("-- Invalid address :-((");
+#endif //DEBUG
+		client->_udp.stop();
+
+		return 0; // return 0 if unable to get the time 
+	}
+}
+
+#endif //NETWORK_TYPE == W5100
 
 #endif // NTP_TIME_SYNC
 
@@ -347,40 +415,6 @@ String ntpClient::printDigits(int digits) {
 	return _udpPort;
 }*/
 
-boolean ntpClient::setInterval(int interval)
-{
-	if (interval >= 10) {
-		if (_longInterval != interval) {
-			_longInterval = interval;
-#ifdef DEBUG
-			Serial.println("Sync interval set to " + interval);
-#endif // DEBUG
-			setSyncInterval(interval);
-		}
-		return true;
-	} else
-		return false;
-}
-
-boolean ntpClient::setInterval(int shortInterval, int longInterval) {
-	if (shortInterval >= 10 && _longInterval >= 10) {
-		_shortInterval = shortInterval;
-		_longInterval = longInterval;
-		if (timeStatus() == timeNotSet) {
-			setSyncInterval(shortInterval);
-		} else {
-			setSyncInterval(longInterval);
-		}
-#ifdef DEBUG
-		Serial.print("Short sync interval set to "); Serial.println(shortInterval);
-		Serial.print("Long sync interval set to "); Serial.println(longInterval);
-#endif // DEBUG
-		return true;
-	} else
-		return false;
-}
-
-
 int ntpClient::getInterval()
 {
 	return _longInterval;
@@ -391,20 +425,26 @@ int ntpClient::getShortInterval()
 	return _shortInterval;
 }
 
-void ntpClient::setDayLight(boolean daylight)
-{
-	this->_daylight = daylight;
-}
-
 boolean ntpClient::getDayLight()
 {
 	return this->_daylight;
+}
+
+int ntpClient::getTimeZone()
+{
+	return _timeZone;
 }
 
 /*int ntpClient::getLongInterval()
 {
 	return _longInterval;
 }*/
+
+
+String ntpClient::getNtpServerName()
+{
+	return String(_ntpServerName);
+}
 
 boolean ntpClient::setNtpServerName(String ntpServerName) {
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
@@ -416,10 +456,42 @@ boolean ntpClient::setNtpServerName(String ntpServerName) {
 	return true;
 }
 
-String ntpClient::getNtpServerName()
+boolean ntpClient::setInterval(int interval)
 {
-	return String(_ntpServerName);
+	if (interval >= 10) {
+		if (_longInterval != interval) {
+			_longInterval = interval;
+#ifdef DEBUG
+			Serial.println("Sync interval set to " + interval);
+#endif // DEBUG
+			setSyncInterval(interval);
+		}
+		return true;
+	}
+	else
+		return false;
 }
+
+boolean ntpClient::setInterval(int shortInterval, int longInterval) {
+	if (shortInterval >= 10 && _longInterval >= 10) {
+		_shortInterval = shortInterval;
+		_longInterval = longInterval;
+		if (timeStatus() == timeNotSet) {
+			setSyncInterval(shortInterval);
+		}
+		else {
+			setSyncInterval(longInterval);
+		}
+#ifdef DEBUG
+		Serial.print("Short sync interval set to "); Serial.println(shortInterval);
+		Serial.print("Long sync interval set to "); Serial.println(longInterval);
+#endif // DEBUG
+		return true;
+	}
+	else
+		return false;
+}
+
 
 boolean ntpClient::setTimeZone(int timeZone)
 {
@@ -435,9 +507,9 @@ boolean ntpClient::setTimeZone(int timeZone)
 		return false;
 }
 
-int ntpClient::getTimeZone()
+void ntpClient::setDayLight(boolean daylight)
 {
-	return _timeZone;
+	this->_daylight = daylight;
 }
 
 //
@@ -453,6 +525,7 @@ boolean ntpClient::summertime(int year, byte month, byte day, byte hour, byte tz
 	else
 		return false;
 }
+
 
 #ifdef NTP_TIME_SYNC
 // send an NTP request to the time server at the given address
@@ -471,7 +544,7 @@ boolean ntpClient::sendNTPpacket(IPAddress &address) {
 	_ntpPacketBuffer[14] = 49;
 	_ntpPacketBuffer[15] = 52;
 	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp:                 
+	// you can send a packet requesting a timestamp: 
 	_udp.beginPacket(address, 123); //NTP requests are to port 123
 	_udp.write(_ntpPacketBuffer, NTP_PACKET_SIZE);
 	_udp.endPacket();
@@ -483,4 +556,3 @@ time_t ntpClient::getLastNTPSync() {
 	return _lastSyncd;
 }
 
-#endif //ARDUINO_ARCH_ESP8266

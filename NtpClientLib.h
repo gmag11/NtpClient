@@ -11,8 +11,6 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-#ifdef ARDUINO_ARCH_ESP8266
-
 //#define DEBUG //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
@@ -29,21 +27,36 @@
 	#include "WProgram.h"
 #endif
 
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
 //#include <Time.h> // Do not use Time.h due to incompatibility with ESP8266 Arduino environment. 
 					// See https://github.com/esp8266/Arduino/issues/1203
 					// Use TimeLib.h instead
 #include <TimeLib.h>
 
-#ifdef __ESP8266_ESP8266__
+#define NETWORK_ESP8266         (1)
+#define NETWORK_W5100           (2)
+#define NETWORK_ENC28J60        (3)
+
+#ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
 #ifdef NTP_TIME_SYNC
 #include <WiFiUdp.h>
 #endif // NTP_TIME_SYNC
-#endif // __ESP8266_ESP8266__
+#define NETWORK_TYPE NETWORK_ESP8266
+#elif defined (ARDUINO_ARCH_AVR)
+#include <SPI.h>
+#include <EthernetUdp.h>
+#include <Ethernet.h>
+#include <Dns.h>
+#include <Dhcp.h>
+#else
+#error "Incorrect platform. Only ARDUINO and ESP8266 mcus are valid."
+#endif
 
-//#include <Udp.h>
+#ifdef ethernet_h
+#define NETWORK_TYPE NETWORK_W5100
+#elif defined (ARDUINO_ARCH_ESP8266)
+#define NETWORK_TYPE NETWORK_ESP8266
+#endif
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -139,22 +152,7 @@ public:
 
 	//boolean	setUdpPort(int port);
 	//int		getUdpPort();
-
-	/**
-	* Changes sync period.
-	* @param[in] New interval in seconds.
-	* @param[out] True if everything went ok.
-	*/
-	boolean setInterval(int interval);
 	
-	/**
-	* Changes sync period in sync'd and not sync'd status.
-	* @param[in] New interval while time is not first adjusted yet, in seconds.
-	* @param[in] New interval for normal operation, in seconds.
-	* @param[out] True if everything went ok.
-	*/
-	boolean setInterval(int shortInterval, int longInterval);
-
 	/**
 	* Gets sync period.
 	* @param[out] Interval for normal operation, in seconds.
@@ -174,38 +172,19 @@ public:
 	int		getLongInterval() { return getInterval(); }
 
 	/**
-	* Set daylight time saving option.
-	* @param[in] true is daylight time savings apply.
-	*/
-	void setDayLight(boolean daylight);
-
-	/**
 	* Get daylight time saving option.
 	* @param[out] true is daylight time savings apply.
 	*/
 	boolean getDayLight();
 
-	/**
-	* Sets NTP server name.
-	* @param[in] New NTP server name.
-	* @param[out] True if everything went ok.
-	*/
-	boolean	setNtpServerName(String ntpServerName);
-	
+
 	/**
 	* Gets NTP server name
 	* @param[out] NTP server name.
 	*/
 	String getNtpServerName();
 
-	/**
-	* Sets timezone.
-	* @param[in] New time offset in hours (-12 <= timeZone <= +12).
-	* @param[out] True if everything went ok.
-	*/
-	boolean setTimeZone(int timeZone);
-	
-	/**
+		/**
 	* Gets timezone.
 	* @param[out] Time offset in hours (plus or minus).
 	*/
@@ -215,6 +194,42 @@ public:
 	* Gets last successful sync time in UNIX format.
 	* @param[out] Last successful sync time. 0 equals never.
 	*/
+
+	/**
+	* Changes sync period.
+	* @param[in] New interval in seconds.
+	* @param[out] True if everything went ok.
+	*/
+	boolean setInterval(int interval);
+
+	/**
+	* Changes sync period in sync'd and not sync'd status.
+	* @param[in] New interval while time is not first adjusted yet, in seconds.
+	* @param[in] New interval for normal operation, in seconds.
+	* @param[out] True if everything went ok.
+	*/
+	boolean setInterval(int shortInterval, int longInterval);
+	
+	/**
+	* Sets timezone.
+	* @param[in] New time offset in hours (-12 <= timeZone <= +12).
+	* @param[out] True if everything went ok.
+	*/
+	boolean setTimeZone(int timeZone);
+
+	/**
+	* Sets NTP server name.
+	* @param[in] New NTP server name.
+	* @param[out] True if everything went ok.
+	*/
+	boolean	setNtpServerName(String ntpServerName);
+
+	/**
+	* Set daylight time saving option.
+	* @param[in] true is daylight time savings apply.
+	*/
+	void setDayLight(boolean daylight);
+
 	time_t getLastNTPSync();
 
 protected:
@@ -257,7 +272,13 @@ private:
 #endif //WEB_TIME_SYNC
 
 #ifdef NTP_TIME_SYNC
+
+#if NETWORK_TYPE == NETWORK_ESP8266
 	WiFiUDP _udp; //UDP port object
+#elif NETWORK_TYPE == NETWORK_W5100
+	EthernetUDP _udp;
+#endif // NETWORK_TYPE
+
 #endif // NTP_TIME_SYNC
 
 	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request and response messages
@@ -278,10 +299,9 @@ private:
 
 };
 
-#endif // ARDUINO_ARCH_ESP8266
 
-#else
-#error “This library only supports ESP8266 based boards.”
-
+#ifndef ARDUINO_ARCH_ESP8266
+//#error “This library only supports ESP8266 based boards.”
+#endif //ARDUINO_ARCH_ESP8266
 #endif // _NtpClientLib_h
 
