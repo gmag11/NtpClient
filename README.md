@@ -32,9 +32,13 @@ Update frequency is higher (every some seconds) until 1st successful sync is ach
         
     void setup() {
     	Serial.begin(115200);
+    	
+    	// Setup Network
     	WiFi.mode(WIFI_STA);
     	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-    	//ntp = ntpClient::getInstance();
+    	
+    	// Setup NTP Client
+    	//ntp = ntpClient::getInstance(); // Default values
     	ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
     	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York
     	ntp->setInterval(15, 1800); // OPTIONAL. Set sync interval
