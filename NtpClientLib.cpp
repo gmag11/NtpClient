@@ -317,14 +317,16 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 #define SEVENTY_YEARS 2208988800UL
 	time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
 
-	if (summertime(year(timeTemp), month(timeTemp), day(timeTemp), hour(timeTemp), _timeZone)) {
-		timeTemp += SECS_PER_HOUR;
+	if (_daylight) {
+		if (summertime(year(timeTemp), month(timeTemp), day(timeTemp), hour(timeTemp), _timeZone)) {
+			timeTemp += SECS_PER_HOUR;
 #ifdef DEBUG
-		Serial.println("Summer Time");
-	}
-	else {
-		Serial.println("Winter Time");
+			Serial.println("Summer Time");
+		}
+		else {
+			Serial.println("Winter Time");
 #endif // DEBUG
+		}
 	}
 
 	return timeTemp;
