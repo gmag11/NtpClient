@@ -76,7 +76,8 @@ time_t ntpClient::getTime() {
 					client->_udp.stop();
 					client->_lastSyncd = timeValue;
 #ifdef DEBUG
-					Serial.printf("Succeccful NTP sync at %s", client->getTimeString(client->_lastSyncd));
+					Serial.println("Succeccful NTP sync at ");
+					Serial.println(client->getTimeString(client->_lastSyncd));
 #endif // DEBUG
 					return timeValue;
 				}
@@ -85,6 +86,7 @@ time_t ntpClient::getTime() {
 			Serial.println("-- No NTP Response :-(");
 #endif //DEBUG
 			client->_udp.stop();
+			setSyncInterval(client->_shortInterval); // Retry connection more often
 
 			return 0; // return 0 if unable to get the time 
 		}
@@ -151,7 +153,8 @@ time_t ntpClient::getTime() {
 				client->_udp.stop();
 				client->_lastSyncd = timeValue;
 #ifdef DEBUG
-				Serial.printf("Succeccful NTP sync at %s", client->getTimeString(client->_lastSyncd));
+				Serial.println("Succeccful NTP sync at ");
+				Serial.println(client->getTimeString(client->_lastSyncd));
 #endif // DEBUG
 				return timeValue;
 			}
@@ -160,7 +163,7 @@ time_t ntpClient::getTime() {
 		Serial.println("-- No NTP Response :-(");
 #endif //DEBUG
 		client->_udp.stop();
-
+		setSyncInterval(client->_shortInterval); // Retry connection more often
 		return 0; // return 0 if unable to get the time 
 	}
 	else {
@@ -322,13 +325,21 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 			timeTemp += SECS_PER_HOUR;
 #ifdef DEBUG
 			Serial.println("Summer Time");
+#endif // DEBUG		
 		}
+#ifdef DEBUG
 		else {
 			Serial.println("Winter Time");
-#endif // DEBUG
 		}
+#endif // DEBUG		
 	}
+#ifdef DEBUG
 
+	else {
+		Serial.println("No daylight");
+
+	}
+#endif // DEBUG		
 	return timeTemp;
 }
 
@@ -511,7 +522,12 @@ boolean ntpClient::setTimeZone(int timeZone)
 
 void ntpClient::setDayLight(boolean daylight)
 {
-	this->_daylight = daylight;
+	_daylight = daylight;
+#ifdef DEBUG
+	Serial.print("--Set daylight saving to ");
+	Serial.println(daylight);
+
+#endif // DEBUG
 }
 
 //
