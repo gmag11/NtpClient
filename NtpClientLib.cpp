@@ -37,17 +37,17 @@ time_t ntpClient::getTime() {
 	ntpClient *client = s_client;
 
 	if (WiFi.status() == WL_CONNECTED) {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.println("Starting UDP");
-#endif
+#endif // DEBUG_NTPCLIENT
 		s_client->_udp.begin(DEFAULT_NTP_PORT);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.print("Local port: ");
 		Serial.println(client->_udp.localPort());
-#endif
+#endif // DEBUG_NTPCLIENT
 		while (client->_udp.parsePacket() > 0); // discard any previously received packets
 		uint8_t dnsResult = WiFi.hostByName(client->_ntpServerName, client->_timeServerIP);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.print("NTP Server hostname: ");
 		Serial.println(client->_ntpServerName);
 		Serial.print("NTP Server IP address: ");
@@ -57,52 +57,52 @@ time_t ntpClient::getTime() {
 		Serial.print(" ");
 		Serial.println("-- Wifi Connected. Waiting for sync");
 		Serial.println("-- Transmit NTP Request");
-#endif //DEDUG
+#endif // DEBUG_NTPCLIENT
 		if (dnsResult == 1) { //If DNS lookup resulted ok
 			client->sendNTPpacket(client->_timeServerIP);
 			uint32_t beginWait = millis();
 			while (millis() - beginWait < 1500) {
 				int size = client->_udp.parsePacket();
 				if (size >= NTP_PACKET_SIZE) {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 					Serial.println("-- Receive NTP Response");
-#endif
+#endif // DEBUG_NTPCLIENT
 					client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 					time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
 					setSyncInterval(client->_longInterval);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 					Serial.println("Sync frequency set low");
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 					client->_udp.stop();
 					client->_lastSyncd = timeValue;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 					Serial.println("Succeccful NTP sync at ");
 					Serial.println(client->getTimeString(client->_lastSyncd));
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 					return timeValue;
 				}
 			}
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 			Serial.println("-- No NTP Response :-(");
-#endif //DEBUG
+#endif // DEBUG_NTPCLIENT
 			client->_udp.stop();
 			setSyncInterval(client->_shortInterval); // Retry connection more often
 
 			return 0; // return 0 if unable to get the time 
 		}
 		else {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 			Serial.println("-- Invalid address :-((");
-#endif //DEBUG
+#endif // DEBUG_NTPCLIENT
 			client->_udp.stop();
 
 			return 0; // return 0 if unable to get the time 
 		}
 	}
 	else {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.println("-- NTP Error. Not connected");
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 		return 0;
 	}
 }
@@ -113,18 +113,18 @@ time_t ntpClient::getTime() {
 	ntpClient *client = s_client;
 	DNSClient dns;
 
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.println("Starting UDP");
-#endif
+#endif // DEBUG_NTPCLIENT
 	s_client->_udp.begin(DEFAULT_NTP_PORT);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.print("Local port: ");
 	Serial.println(client->_udp.localPort());
-#endif
+#endif // DEBUG_NTPCLIENT
 	while (client->_udp.parsePacket() > 0); // discard any previously received packets
 	dns.begin(Ethernet.dnsServerIP());
 	uint8_t dnsResult = dns.getHostByName(client->_ntpServerName, client->_timeServerIP);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.print("NTP Server hostname: ");
 	Serial.println(client->_ntpServerName);
 	Serial.print("NTP Server IP address: ");
@@ -134,42 +134,42 @@ time_t ntpClient::getTime() {
 	Serial.print(" ");
 	Serial.println("-- Wifi Connected. Waiting for sync");
 	Serial.println("-- Transmit NTP Request");
-#endif //DEDUG
+#endif // DEBUG_NTPCLIENT
 	if (dnsResult == 1) { //If DNS lookup resulted ok
 		client->sendNTPpacket(client->_timeServerIP);
 		uint32_t beginWait = millis();
 		while (millis() - beginWait < 1500) {
 			int size = client->_udp.parsePacket();
 			if (size >= NTP_PACKET_SIZE) {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 				Serial.println("-- Receive NTP Response");
-#endif
+#endif // DEBUG_NTPCLIENT
 				client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 				time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
 				setSyncInterval(client->_longInterval);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 				Serial.println("Sync frequency set low");
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 				client->_udp.stop();
 				client->_lastSyncd = timeValue;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 				Serial.println("Succeccful NTP sync at ");
 				Serial.println(client->getTimeString(client->_lastSyncd));
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 				return timeValue;
 			}
 		}
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.println("-- No NTP Response :-(");
-#endif //DEBUG
+#endif // DEBUG_NTPCLIENT
 		client->_udp.stop();
 		setSyncInterval(client->_shortInterval); // Retry connection more often
 		return 0; // return 0 if unable to get the time 
 	}
 	else {
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.println("-- Invalid address :-((");
-#endif //DEBUG
+#endif // DEBUG_NTPCLIENT
 		client->_udp.stop();
 
 		return 0; // return 0 if unable to get the time 
@@ -189,7 +189,9 @@ time_t ntpClient::getTime() {
 	//WiFiClient webClient;
 
 	// Just choose any reasonably busy web server, the load is really low
+#ifdef DEBUG_NTPCLIENT
 	Serial.print("Conectando "); Serial.println(client->_ntpServerName);
+#endif // DEBUG_NTPCLIENT
 	if (client->_webClient.connect(client->_ntpServerName, 80))
 	{
 		// Make an HTTP 1.1 request which is missing a Host: header
@@ -272,10 +274,10 @@ ntpClient::ntpClient(String ntpServerName, int timeOffset, boolean daylight) {
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE); //Initialize ntp server name char[]
 	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE); //Initialize packet buffer[]
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.print("ntpClient instance created: ");
 	Serial.println(_ntpServerName);
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 	_shortInterval = DEFAULT_NTP_SHORTINTERVAL;
 	_longInterval = DEFAULT_NTP_INTERVAL;
 	if (timeOffset >= -12 && timeOffset <= 12)
@@ -294,17 +296,17 @@ ntpClient::ntpClient(String ntpServerName, int timeOffset, boolean daylight) {
 boolean ntpClient::begin() {
 	setSyncProvider(getTime);
 	setSyncInterval(_shortInterval);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.println("Time sync started");
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 	return true;
 }
 
 boolean ntpClient::stop() {
 	setSyncProvider(NULL);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.println("Time sync disabled");
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 
 	return true;
 }
@@ -323,23 +325,23 @@ time_t ntpClient::decodeNtpMessage(byte *messageBuffer) {
 	if (_daylight) {
 		if (summertime(year(timeTemp), month(timeTemp), day(timeTemp), hour(timeTemp), _timeZone)) {
 			timeTemp += SECS_PER_HOUR;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 			Serial.println("Summer Time");
-#endif // DEBUG		
+#endif // DEBUG_NTPCLIENT		
 		}
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		else {
 			Serial.println("Winter Time");
 		}
-#endif // DEBUG		
+#endif // DEBUG_NTPCLIENT		
 	}
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 
 	else {
 		Serial.println("No daylight");
 
 	}
-#endif // DEBUG		
+#endif // DEBUG_NTPCLIENT		
 	return timeTemp;
 }
 
@@ -462,9 +464,9 @@ String ntpClient::getNtpServerName()
 boolean ntpClient::setNtpServerName(String ntpServerName) {
 	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
 	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.println("NTP server set to " + ntpServerName);
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 
 	return true;
 }
@@ -474,9 +476,9 @@ boolean ntpClient::setInterval(int interval)
 	if (interval >= 10) {
 		if (_longInterval != interval) {
 			_longInterval = interval;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 			Serial.println("Sync interval set to " + interval);
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 			setSyncInterval(interval);
 		}
 		return true;
@@ -495,10 +497,10 @@ boolean ntpClient::setInterval(int shortInterval, int longInterval) {
 		else {
 			setSyncInterval(longInterval);
 		}
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.print("Short sync interval set to "); Serial.println(shortInterval);
 		Serial.print("Long sync interval set to "); Serial.println(longInterval);
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 		return true;
 	}
 	else
@@ -510,9 +512,9 @@ boolean ntpClient::setTimeZone(int timeZone)
 {
 	if (timeZone >= -13 || timeZone <= 13) {
 		_timeZone = timeZone;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 		Serial.println("Time zone set to " + _timeZone);
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 
 		return true;
 	}
@@ -523,11 +525,11 @@ boolean ntpClient::setTimeZone(int timeZone)
 void ntpClient::setDayLight(boolean daylight)
 {
 	_daylight = daylight;
-#ifdef DEBUG
+#ifdef DEBUG_NTPCLIENT
 	Serial.print("--Set daylight saving to ");
 	Serial.println(daylight);
 
-#endif // DEBUG
+#endif // DEBUG_NTPCLIENT
 }
 
 //

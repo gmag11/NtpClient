@@ -11,7 +11,7 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG //Uncomment this to enable debug messages over serial port
+//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
 					  // That method is far less accurate and is not recommended. NTP is always preferred
