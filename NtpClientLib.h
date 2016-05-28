@@ -11,15 +11,7 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
-
-#define NTP_TIME_SYNC // Comment this to enable experimental Web Time synchronization via HTTP
-					  // That method is far less accurate and is not recommended. NTP is always preferred
-
-#ifndef NTP_TIME_SYNC
-#define WEB_TIME_SYNC // Web time sync method. Not reliable!!!
-#endif //NTP_TIME_SYNC
-
+#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -32,31 +24,13 @@
 					// Use TimeLib.h instead
 #include <TimeLib.h>
 
-#define NETWORK_ESP8266         (1)
-#define NETWORK_W5100           (2)
-#define NETWORK_ENC28J60        (3)
+//#include <ESP8266WiFi.h>
 
-#ifdef ARDUINO_ARCH_ESP8266
-#include <ESP8266WiFi.h>
-#ifdef NTP_TIME_SYNC
-#include <WiFiUdp.h>
-#endif // NTP_TIME_SYNC
-#define NETWORK_TYPE NETWORK_ESP8266
-#elif defined (ARDUINO_ARCH_AVR)
-#include <SPI.h>
-#include <EthernetUdp.h>
-#include <Ethernet.h>
-#include <Dns.h>
-#include <Dhcp.h>
-#else
-#error "Incorrect platform. Only ARDUINO and ESP8266 mcus are valid."
-#endif
-
-#ifdef ethernet_h
-#define NETWORK_TYPE NETWORK_W5100
-#elif defined (ARDUINO_ARCH_ESP8266)
-#define NETWORK_TYPE NETWORK_ESP8266
-#endif
+//#include <WiFiUdp.h>
+extern "C" {
+#include "user_interface.h"
+#include "sntp.h"
+}
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -66,31 +40,18 @@
 
 #define NTP_SERVER_NAME_SIZE 60 // Max server name length
 
-const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
-
-#ifdef WEB_TIME_SYNC
-PROGMEM const char HTTP_Request[] = "GET / HTTP/1.1 \r\n\r\n";
-#endif // WEB_TIME_SYNC
-
 class ntpClient {
 	
 public:
 	
 	/**
-	* Gets ntpClient instance changing parameters if it already exists or creates it if does not.
+	* Starts time synchronization.
 	* @param[in] NTP server name.
 	* @param[in] Time offset from UTC.
-	* @param[out] Pointer to ntpClient instance
-	*/
-	static ntpClient* getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false);
-
-	//virtual ~ntpClient() {};
-
-	/**
-	* Starts time synchronization.
+	* @param[in] DayLight saving hour on.
 	* @param[out] true if everything went ok.
 	*/
-	boolean begin();
+	boolean begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false);
 
 	/**
 	* Stops time synchronization.
@@ -150,9 +111,6 @@ public:
 	*/
 	String getTimeString(time_t moment);
 
-	//boolean	setUdpPort(int port);
-	//int		getUdpPort();
-	
 	/**
 	* Gets sync period.
 	* @param[out] Interval for normal operation, in seconds.
@@ -241,10 +199,10 @@ protected:
 	*/
 	String printDigits(int digits);
 
-	int _timeZone; //Local time zone. Added to NTP time
+	//int _timeZone; //Local time zone. Added to NTP time
 	boolean _daylight; //Does this time zone have daylight saving?
 	static boolean instanceFlag; //Flag to control that instance has been created
-	static ntpClient *s_client; //pointer to this instance
+	//static ntpClient *s_client; //pointer to this instance
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
 	time_t _lastSyncd; //Stored time of last successful sync
@@ -256,49 +214,18 @@ protected:
 	* @param[in] NTP server name as String.
 	* @param[in] Time offset from UTC.
 	*/
-	ntpClient(String ntpServerName, int timeOffset, boolean daylight);
+	ntpClient();
 	
 	//static void DestroyNtpClient();
 
 private:
 
-#ifdef NTP_TIME_SYNC
-	int _udpPort; //UDP port number to send request from
-#endif // NTP_TIME_SYNC
-	char _ntpServerName[NTP_SERVER_NAME_SIZE]; //NTP server name
-	IPAddress _timeServerIP; //NTP server IP address
-#ifdef WEB_TIME_SYNC
-	WiFiClient _webClient; // HTTP client
-#endif //WEB_TIME_SYNC
-
-#ifdef NTP_TIME_SYNC
-
-#if NETWORK_TYPE == NETWORK_ESP8266
-	WiFiUDP _udp; //UDP port object
-#elif NETWORK_TYPE == NETWORK_W5100
-	EthernetUDP _udp;
-#endif // NETWORK_TYPE
-
-#endif // NTP_TIME_SYNC
-
-	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request and response messages
-	
-	/**
-	* Sends NTP request packet to given IP address.
-	* @param[in] NTP server's IP address.
-	* @param[out] True if everything went ok.
-	*/
-	boolean sendNTPpacket(IPAddress &address);
-
-	/**
-	* Decode NTP response contained in buffer.
-	* @param[in] Pointer to message buffer.
-	* @param[out] Decoded time from message, 0 if error ocurred.
-	*/
-	time_t decodeNtpMessage(byte *messageBuffer);
+	//char _ntpServerName[NTP_SERVER_NAME_SIZE]; //NTP server name
+	//IPAddress _timeServerIP; //NTP server IP address
 
 };
 
+ntpClient NTPClient;
 
 #ifndef ARDUINO_ARCH_ESP8266
 //#error “This library only supports ESP8266 based boards.”
