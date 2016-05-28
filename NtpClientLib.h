@@ -24,7 +24,7 @@
 					// Use TimeLib.h instead
 #include <TimeLib.h>
 
-//#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 
 //#include <WiFiUdp.h>
 extern "C" {
@@ -64,7 +64,7 @@ public:
 	* Kept in public section to allow direct NTP request.
 	* @param[out] Time in UNIX time format.
 	*/
-	static time_t getTime();
+	time_t getTime();
 	
 	/**
 	* Convert current time to a String.
@@ -190,6 +190,13 @@ public:
 
 	time_t getLastNTPSync();
 
+	/**
+	* Construct NTP client to given server name.
+	* @param[in] NTP server name as String.
+	* @param[in] Time offset from UTC.
+	*/
+	ntpClient();
+
 protected:
 	
 	/**
@@ -209,12 +216,9 @@ protected:
 
 	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
-	/**
-	* Construct NTP client to given server name.
-	* @param[in] NTP server name as String.
-	* @param[in] Time offset from UTC.
-	*/
-	ntpClient();
+	boolean summertime(time_t moment);
+
+	
 	
 	//static void DestroyNtpClient();
 

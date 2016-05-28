@@ -6,6 +6,7 @@
 */
 
 #include "NtpClientLib.h"
+#include <TimeLib.h>
 
 extern ntpClient NTPClient;
 
@@ -14,35 +15,32 @@ time_t ntpClient::getTime() {
 	if (WiFi.status() == WL_CONNECTED) {
 #ifdef DEBUG_NTPCLIENT
 		Serial.print("NTP Server hostname: ");
-		Serial.println(client->_ntpServerName);
-		Serial.print("NTP Server IP address: ");
-		Serial.println(client->_timeServerIP);
-		Serial.print("Result code: ");
-		Serial.print(dnsResult);
-		Serial.print(" ");
+		Serial.println(getNtpServerName());
 		Serial.println("-- Wifi Connected. Waiting for sync");
 		Serial.println("-- Transmit NTP Request");
 #endif // DEBUG_NTPCLIENT
 		time_t timeValue = sntp_get_current_timestamp();
 		if (timeValue > 0) {
-			setSyncInterval(client->_longInterval);
+			setSyncInterval(_longInterval);
 #ifdef DEBUG_NTPCLIENT
 			Serial.println("Sync frequency set low");
 #endif // DEBUG_NTPCLIENT
-			client->_lastSyncd = timeValue;
+			_lastSyncd = timeValue;
 #ifdef DEBUG_NTPCLIENT
 			Serial.println("Succeccful NTP sync at ");
-			Serial.println(client->getTimeString(client->_lastSyncd));
+			Serial.println(getTimeString(_lastSyncd));
 #endif // DEBUG_NTPCLIENT
 			if (_daylight) {
-				if (summertime())
+				if (summertime(timeValue)) {
+					timeValue += SECS_PER_YEAR;
+				}
 			}
 			return timeValue;
 		} else {
 #ifdef DEBUG_NTPCLIENT
 			Serial.println("-- NTP Error :-(");
 #endif // DEBUG_NTPCLIENT
-			setSyncInterval(client->_shortInterval); // Retry connection more often
+			setSyncInterval(_shortInterval); // Retry connection more often
 			return 0; // return 0 if unable to get the time 
 		}
 	} else {
@@ -54,7 +52,6 @@ time_t ntpClient::getTime() {
 }
 
 ntpClient::ntpClient() {
-	_udpPort = DEFAULT_NTP_PORT;
 	_shortInterval = DEFAULT_NTP_SHORTINTERVAL;
 	_longInterval = DEFAULT_NTP_INTERVAL;
 }
@@ -70,7 +67,7 @@ boolean ntpClient::begin(String ntpServerName, int timeOffset, boolean daylight)
 	setTimeZone(timeOffset);
 	setDayLight(daylight);
 	sntp_init();
-	setSyncProvider(getTime);
+	setSyncProvider(NTPClient.getTime);
 	setSyncInterval(_shortInterval);
 #ifdef DEBUG_NTPCLIENT
 	Serial.println("Time sync started");
@@ -186,6 +183,7 @@ String ntpClient::getNtpServerName()
 }
 
 boolean ntpClient::setNtpServerName(String ntpServerName) {
+	char *servername;
 	sntp_setservername(0, ntpServerName.c_str());
 #ifdef DEBUG_NTPCLIENT
 	Serial.println("NTP server set to " + ntpServerName);
@@ -257,6 +255,10 @@ void ntpClient::setDayLight(boolean daylight)
 	Serial.println(daylight);
 
 #endif // DEBUG_NTPCLIENT
+}
+
+boolean ntpClient::summertime(time_t moment) {
+	return summertime(year(moment), (byte)month(moment), (byte)day(moment), (byte)hour(moment), (byte)sntp_get_timezone());
 }
 
 //
