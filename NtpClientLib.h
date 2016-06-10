@@ -1,8 +1,8 @@
 /*
  Name:		NtpClientLib
  Created:	21/12/2015 16:26:34
- Author:	Germán Martín (gmag11@gmail.com)
- Maintainer:Germán Martín (gmag11@gmail.com)
+ Author:	GermÃ¡n MartÃ­n (gmag11@gmail.com)
+ Maintainer:GermÃ¡n MartÃ­n (gmag11@gmail.com)
  Editor:	http://www.visualmicro.com
 
  Library to get system sync from a NTP server
@@ -22,7 +22,7 @@
 
 
 #if defined(ARDUINO) && ARDUINO >= 100
-	#include "arduino.h"
+	#include "Arduino.h"
 #else
 	#include "WProgram.h"
 #endif
@@ -301,7 +301,7 @@ private:
 
 
 #ifndef ARDUINO_ARCH_ESP8266
-//#error “This library only supports ESP8266 based boards.”
+//#error Â“This library only supports ESP8266 based boards.Â”
 #endif //ARDUINO_ARCH_ESP8266
 #endif // _NtpClientLib_h
 
