@@ -2,6 +2,8 @@
 // 
 // 
 
+#ifdef ARDUINO_ARCH_ESP8266
+
 #include "ESPNTPClient.h"
 
 #define DBG_PORT Serial
@@ -283,7 +285,6 @@ String ESPNTPClient::printDigits(int digits) {
 	return digStr;
 }
 
-
 boolean ESPNTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
 {
@@ -339,3 +340,5 @@ String ESPNTPClient::getUptimeString() {
 time_t ESPNTPClient::getLastNTPSync() {
 	return _lastSyncd;
 }
+
+#endif // ARDUINO_ARCH_ESP8266

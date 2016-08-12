@@ -5,71 +5,42 @@
  Editor:	http://www.visualmicro.com
 */
 
-
-
-//#include <WiFiUdp.h>
-
 #include <TimeLib.h>
 
-//#ifdef ARDUINO_ARCH_ESP8266
-//#define EXT_WIFI_CONFIG_H //Uncomment to enable WiFi credentials external header file storage.
-// Used to not publish your own wifi keys in main code
-/* WifiConfig.h example
-#pragma once
-#ifndef WIFI_CONFIG_H
-#define WIFI_CONFIG_H
-
-#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
-#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
-
-#endif //WIFI_CONFIG_H
-*/
+#include <TimeLib.h>
+#include "WifiConfig.h"
+#include "NtpClientLib.h"
 #include <ESP8266WiFi.h>
-extern "C" {
-#include "user_interface.h"
-#include "sntp.h"
-}
 
-#ifndef EXT_WIFI_CONFIG_H
+#ifndef WIFI_CONFIG_H
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
-#endif // !EXT_WIFI_CONFIG_H
+#endif // !WIFI_CONFIG_H
 
-struct strConfig {
-	String ssid;
-	String password;
-} config;
-
-#ifdef EXT_WIFI_CONFIG_H
-#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
-#endif // EXT_WIFI_CONFIG_H
-
-#include <NtpClientLib.h>
-
-int i = 0;
-//ntpClient *ntp;
-
-
-// the setup function runs once when you press reset or power the board
-void setup() {
+void setup()
+{
 	Serial.begin(115200);
-#ifdef ARDUINO_ARCH_ESP8266
-	config.ssid = YOUR_WIFI_SSID; // Your SSID
-	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
-	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-#endif // ARDUINO_ARCH_ESP8266
-	
-	NTPClient.setInterval(15, 1800); // OPTIONAL. Set sync interval
-	NTPClient.begin("es.pool.ntp.org", 1, true);
+	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+	NTP.begin("es.pool.ntp.org", 1, true);
 }
 
+void loop()
+{
+	static int i = 0;
+	static int last = 0;
 
-// the loop function runs over and over again until power down or reset
-void loop() {
-	Serial.print(i);
-	Serial.print(" ");
-	Serial.println(NTPClient.getTimeString());
-	delay(1000);
-	i++;
+	//if (timeStatus() == timeSet) {
+	if ((millis() - last) > 5000) {
+		//Serial.println(millis() - last);
+		last = millis();
+		Serial.printf("%d %s. WiFi is %s. Uptime: %s since %s                 \r\n",
+			i,
+			NTP.getTimeDateString().c_str(),
+			WiFi.isConnected() ? "connected" : "not connected",
+			NTP.getUptimeString().c_str(),
+			NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+		i++;
+	}
+
 }

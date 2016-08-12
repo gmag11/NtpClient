@@ -11,6 +11,8 @@ Library to get system sync from a NTP server
 #ifndef _ESPNTPCLIENT_h
 #define _ESPNTPCLIENT_h
 
+#ifdef ARDUINO_ARCH_ESP8266
+
 #ifdef ESP8266
 extern "C" {
 #include "user_interface.h"
@@ -203,6 +205,8 @@ protected:
 
 
 extern ESPNTPClient NTP;
+
+#endif // ARDUINO_ARCH_ESP8266
 
 #endif //_ESPNTPCLIENT_h
 

@@ -5,7 +5,9 @@
  Editor:	http://www.visualmicro.com
 */
 
-#include "NtpClientLib.h"
+#ifdef ARDUINO_ARCH_AVR
+
+#include "AvrNTPClient.h"
 
 boolean ntpClient::instanceFlag = false;
 ntpClient *ntpClient::s_client = NULL;
@@ -576,3 +578,4 @@ time_t ntpClient::getLastNTPSync() {
 	return _lastSyncd;
 }
 
+#endif // ARDUINO_ARCH_AVR
