@@ -24,11 +24,8 @@
 #elif defined (ARDUINO_ARCH_AVR)
 #include "AvrNTPClient.h"
 #else
-#error "Incorrect platform. Only ARDUINO and ESP8266 mcus are valid."
+#error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
 #endif
 
-#ifndef ARDUINO_ARCH_ESP8266
-//#error This library only supports ESP8266 based boards.
-#endif //ARDUINO_ARCH_ESP8266
 #endif // _NtpClientLib_h
 

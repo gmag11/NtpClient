@@ -10,7 +10,16 @@
 #include <TimeLib.h>
 #include "WifiConfig.h"
 #include "NtpClientLib.h"
+
+#ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
+#elif defined (ARDUINO_ARCH_AVR)
+#include <SPI.h>
+#include <EthernetUdp.h>
+#include <Ethernet.h>
+#include <Dns.h>
+#include <Dhcp.h>
+#endif
 
 #ifndef WIFI_CONFIG_H
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"

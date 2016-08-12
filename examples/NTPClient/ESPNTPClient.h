@@ -202,8 +202,6 @@ protected:
 	
 };
 
-
-
 extern ESPNTPClient NTP;
 
 #endif // ARDUINO_ARCH_ESP8266
