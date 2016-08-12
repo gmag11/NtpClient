@@ -42,8 +42,6 @@
 #define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
 
-#define NTP_SERVER_NAME_SIZE 60 // Max server name length
-
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
 #ifdef WEB_TIME_SYNC
@@ -84,13 +82,6 @@ public:
 	boolean stop();
 
 	/**
-	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
-	* Kept in public section to allow direct NTP request.
-	* @param[out] Time in UNIX time format.
-	*/
-	static time_t getTime();
-	
-	/**
 	* Convert current time to a String.
 	* @param[out] String constructed from current time.
 	* TODO: Add internationalization support
@@ -125,7 +116,7 @@ public:
 	* @param[out] String constructed from current time.
 	* TODO: Add internationalization support
 	*/
-	String getTimeString();
+	String getTimeDateString();
 
 	/**
 	* Convert current time and date to a String.
@@ -133,7 +124,7 @@ public:
 	* @param[in] time_t object to convert to String.
 	* TODO: Add internationalization support
 	*/
-	String getTimeString(time_t moment);
+	String getTimeDateString(time_t moment);
 
 	//boolean	setUdpPort(int port);
 	//int		getUdpPort();
@@ -239,7 +230,7 @@ protected:
 private:
 
 	int _udpPort; //UDP port number to send request from
-	char _ntpServerName[NTP_SERVER_NAME_SIZE]; //NTP server name
+	char* _ntpServerName; //NTP server name
 	IPAddress _timeServerIP; //NTP server IP address
 
 #if NETWORK_TYPE == NETWORK_W5100

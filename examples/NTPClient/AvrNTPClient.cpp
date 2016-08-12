@@ -29,7 +29,11 @@ AvrNTPClient NTP;
 }*/
 
 #if NETWORK_TYPE == NETWORK_W5100
-time_t AvrNTPClient::getTime() {
+/**
+* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
+* @param[out] Time in UNIX time format. Seconds since 1st january 1970.
+*/
+time_t getTime() {
 	ntpClient *client = s_client;
 	DNSClient dns;
 
@@ -205,7 +209,7 @@ String AvrNTPClient::getTimeStr(time_t moment) {
 }
 
 String AvrNTPClient::getTimeStr() {
-	return this->getTimeStr(now());
+	return getTimeStr(now());
 }
 
 String AvrNTPClient::getDateStr(time_t moment) {
@@ -224,15 +228,15 @@ String AvrNTPClient::getDateStr(time_t moment) {
 }
 
 String AvrNTPClient::getDateStr() {
-	return this->getDateStr(now());
+	return getDateStr(now());
 }
 
-String AvrNTPClient::getTimeString(time_t moment) {
+String AvrNTPClient::getTimeDateString(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
-		timeStr += this->getTimeStr(moment);
+		timeStr += getTimeStr(moment);
 		timeStr += " ";
-		timeStr += this->getDateStr(moment);
+		timeStr += getDateStr(moment);
 
 		return timeStr;
 	} else {
@@ -240,8 +244,8 @@ String AvrNTPClient::getTimeString(time_t moment) {
 	}
 }
 
-String AvrNTPClient::getTimeString() {
-	return this->getTimeString(now());
+String AvrNTPClient::getTimeDateString() {
+	return getTimeDateString(now());
 }
 
 String AvrNTPClient::printDigits(int digits) {
@@ -275,24 +279,19 @@ int AvrNTPClient::getTimeZone()
 	return _timeZone;
 }
 
-/*int AvrNTPClient::getLongInterval()
-{
-	return _longInterval;
-}*/
-
-
 String AvrNTPClient::getNtpServerName()
 {
 	return String(_ntpServerName);
 }
 
 boolean AvrNTPClient::setNtpServerName(String ntpServerName) {
-	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE);
-	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
+	char * name = (char *)malloc((ntpServerName.length() + 1) * sizeof(char));
+	ntpServerName.toCharArray(name, ntpServerName.length() + 1);
 #ifdef DEBUG_NTPCLIENT
-	Serial.println("NTP server set to " + ntpServerName);
+	Serial.printf("NTP server set to %s" + name);
 #endif // DEBUG_NTPCLIENT
-
+	free(_ntpServerName);
+	_ntpServerName = name;
 	return true;
 }
 
@@ -335,7 +334,7 @@ boolean AvrNTPClient::setInterval(int shortInterval, int longInterval) {
 
 boolean AvrNTPClient::setTimeZone(int timeZone)
 {
-	if (timeZone >= -13 || timeZone <= 13) {
+	if (timeZone >= -11 || timeZone <= 13) {
 		_timeZone = timeZone;
 #ifdef DEBUG_NTPCLIENT
 		Serial.println("Time zone set to " + _timeZone);
