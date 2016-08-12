@@ -11,12 +11,20 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
-#elif defined (ARDUINO_ARCH_AVR)
+#elif defined ARDUINO_ARCH_AVR
 #include <SPI.h>
 #include <EthernetUdp.h>
 #include <Ethernet.h>
 #include <Dns.h>
 #include <Dhcp.h>
+
+// Enter a MAC address for your controller below.
+// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+byte mac[] = {
+	0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
+};
+
+EthernetClient client;
 #endif
 
 #ifndef WIFI_CONFIG_H
@@ -30,7 +38,13 @@ void setup()
 #ifdef ARDUINO_ARCH_ESP8266
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-#elif defined (ARDUINO_ARCH_AVR)
+#elif defined ARDUINO_ARCH_AVR
+	if (Ethernet.begin(mac) == 0) {
+		Serial.println("Failed to configure Ethernet using DHCP");
+		// no point in carrying on, so do nothing forevermore:
+		for (;;)
+			;
+	}
 #endif
 	NTP.begin("es.pool.ntp.org", 1, true);
 }
@@ -40,7 +54,6 @@ void loop()
 	static int i = 0;
 	static int last = 0;
 
-	//if (timeStatus() == timeSet) {
 	if ((millis() - last) > 5000) {
 		//Serial.println(millis() - last);
 		last = millis();
@@ -56,5 +69,7 @@ void loop()
 
 		i++;
 	}
-
+#ifdef ARDUINO_ARCH_AVR
+	Ethernet.maintain(); // Check DHCP for renewal
+#endif // ARDUINO_ARCH_AVR
 }
