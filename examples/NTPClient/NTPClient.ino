@@ -5,91 +5,71 @@
  Editor:	http://www.visualmicro.com
 */
 
-
-
-//#include <WiFiUdp.h>
-
 #include <TimeLib.h>
+#include "WifiConfig.h"
+#include <NtpClientLib.h>
 
 #ifdef ARDUINO_ARCH_ESP8266
-//#define EXT_WIFI_CONFIG_H //Uncomment to enable WiFi credentials external header file storage.
-// Used to not publish your own wifi keys in main code
-/* WifiConfig.h example
-#pragma once
-#ifndef WIFI_CONFIG_H
-#define WIFI_CONFIG_H
-
-#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
-#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
-
-#endif //WIFI_CONFIG_H
-*/
 #include <ESP8266WiFi.h>
-
-#ifndef EXT_WIFI_CONFIG_H
-#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
-#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
-#endif // !EXT_WIFI_CONFIG_H
-
-struct strConfig {
-	String ssid;
-	String password;
-} config;
-
-#ifdef EXT_WIFI_CONFIG_H
-#include "WifiConfig.h" // Wifi configuration (SSID + PASSWD) in an extenal .h file
-#endif // EXT_WIFI_CONFIG_H
-
-#elif defined (ARDUINO_ARCH_AVR)
+#elif defined ARDUINO_ARCH_AVR
+#include <SPI.h>
 #include <EthernetUdp.h>
 #include <Ethernet.h>
+#include <Dns.h>
 #include <Dhcp.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {
-	0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+	0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
 };
-#endif // ARDUINO_ARCH_ESP8266
 
-#include <NtpClientLib.h>
+EthernetClient client;
+#endif
 
+#ifndef WIFI_CONFIG_H
+#define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
+#define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
+#endif // !WIFI_CONFIG_H
 
-
-int i = 0;
-ntpClient *ntp;
-
-
-// the setup function runs once when you press reset or power the board
-void setup() {
+void setup()
+{
 	Serial.begin(115200);
 #ifdef ARDUINO_ARCH_ESP8266
-	config.ssid = YOUR_WIFI_SSID; // Your SSID
-	config.password = YOUR_WIFI_PASSWD; //Your WiFi Password
 	WiFi.mode(WIFI_STA);
-	WiFi.begin(config.ssid.c_str(), config.password.c_str());
-#elif defined(ARDUINO_ARCH_AVR)
+	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+#elif defined ARDUINO_ARCH_AVR
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// no point in carrying on, so do nothing forevermore:
 		for (;;)
 			;
 	}
-#endif // ARDUINO_ARCH_ESP8266
-	
-	//ntp = ntpClient::getInstance();
-	ntp = ntpClient::getInstance("es.pool.ntp.org", 1); // Spain
-	//ntp = ntpClient::getInstance("us.pool.ntp.org", -5); // New York
-	ntp->setInterval(15, 1800); // OPTIONAL. Set sync interval
-	ntp->begin(); //Starts time synchronization
+#endif
+	NTP.begin("es.pool.ntp.org", 1, true);
 }
 
+void loop()
+{
+	static int i = 0;
+	static int last = 0;
 
-// the loop function runs over and over again until power down or reset
-void loop() {
-	Serial.print(i);
-	Serial.print(" ");
-	Serial.println(ntp->getTimeString());
-	delay(1000);
-	i++;
+	if ((millis() - last) > 5000) {
+		//Serial.println(millis() - last);
+		last = millis();
+		Serial.print(i); Serial.print(" ");
+		Serial.print(NTP.getTimeDateString()); Serial.print(". ");
+#ifdef ARDUINO_ARCH_ESP8266
+		Serial.print("WiFi is ");
+		Serial.print(WiFi.isConnected() ? "connected" : "not connected"); Serial.print(". ");
+#endif
+		Serial.print("Uptime: ");
+		Serial.print(NTP.getUptimeString()); Serial.print(" since ");
+		Serial.println(NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+
+		i++;
+	}
+#ifdef ARDUINO_ARCH_AVR
+	Ethernet.maintain(); // Check DHCP for renewal
+#endif // ARDUINO_ARCH_AVR
 }
