@@ -6,8 +6,6 @@
 */
 
 #include <TimeLib.h>
-
-#include <TimeLib.h>
 #include "WifiConfig.h"
 #include "NtpClientLib.h"
 
@@ -29,8 +27,11 @@
 void setup()
 {
 	Serial.begin(115200);
+#ifdef ARDUINO_ARCH_ESP8266
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+#elif defined (ARDUINO_ARCH_AVR)
+#endif
 	NTP.begin("es.pool.ntp.org", 1, true);
 }
 
@@ -43,12 +44,16 @@ void loop()
 	if ((millis() - last) > 5000) {
 		//Serial.println(millis() - last);
 		last = millis();
-		Serial.printf("%d %s. WiFi is %s. Uptime: %s since %s                 \r\n",
-			i,
-			NTP.getTimeDateString().c_str(),
-			WiFi.isConnected() ? "connected" : "not connected",
-			NTP.getUptimeString().c_str(),
-			NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+		Serial.print(i); Serial.print(" ");
+		Serial.print(NTP.getTimeDateString()); Serial.print(". ");
+#ifdef ARDUINO_ARCH_ESP8266
+		Serial.print("WiFi is ");
+		Serial.print(WiFi.isConnected() ? "connected" : "not connected"); Serial.print(". ");
+#endif
+		Serial.print("Uptime: ");
+		Serial.print(NTP.getUptimeString()); Serial.print(" since ");
+		Serial.println(NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+
 		i++;
 	}
 

@@ -29,56 +29,84 @@ AvrNTPClient NTP;
 }*/
 
 #if NETWORK_TYPE == NETWORK_W5100
+// send an NTP request to the time server at the given address
+boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
+	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
+
+										   // set all bytes in the buffer to 0
+	memset(ntpPacketBuffer, 0, NTP_PACKET_SIZE);
+	// Initialize values needed to form NTP request
+	// (see URL above for details on the packets)
+	ntpPacketBuffer[0] = 0b11100011;   // LI, Version, Mode
+	ntpPacketBuffer[1] = 0;     // Stratum, or type of clock
+	ntpPacketBuffer[2] = 6;     // Polling Interval
+	ntpPacketBuffer[3] = 0xEC;  // Peer Clock Precision
+								// 8 bytes of zero for Root Delay & Root Dispersion
+	ntpPacketBuffer[12] = 49;
+	ntpPacketBuffer[13] = 0x4E;
+	ntpPacketBuffer[14] = 49;
+	ntpPacketBuffer[15] = 52;
+	// all NTP fields have been given values, now
+	// you can send a packet requesting a timestamp: 
+	udp.beginPacket(address, 123); //NTP requests are to port 123
+	udp.write(ntpPacketBuffer, NTP_PACKET_SIZE);
+	udp.endPacket();
+	return true;
+}
+
+
 /**
 * Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
 * @param[out] Time in UNIX time format. Seconds since 1st january 1970.
 */
 time_t getTime() {
-	ntpClient *client = s_client;
 	DNSClient dns;
+	EthernetUDP udp;
+	IPAddress timeServerIP; //NTP server IP address
+	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
 #ifdef DEBUG_NTPCLIENT
 	Serial.println("Starting UDP");
 #endif // DEBUG_NTPCLIENT
-	s_client->_udp.begin(DEFAULT_NTP_PORT);
+	udp.begin(DEFAULT_NTP_PORT);
 #ifdef DEBUG_NTPCLIENT
 	Serial.print("Local port: ");
 	Serial.println(client->_udp.localPort());
 #endif // DEBUG_NTPCLIENT
-	while (client->_udp.parsePacket() > 0); // discard any previously received packets
+	while (udp.parsePacket() > 0); // discard any previously received packets
 	dns.begin(Ethernet.dnsServerIP());
-	uint8_t dnsResult = dns.getHostByName(client->_ntpServerName, client->_timeServerIP);
+	uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
 #ifdef DEBUG_NTPCLIENT
 	Serial.print("NTP Server hostname: ");
-	Serial.println(client->_ntpServerName);
+	Serial.println(NTP.getNtpServerName());
 	Serial.print("NTP Server IP address: ");
-	Serial.println(client->_timeServerIP);
+	Serial.println(timeServerIP);
 	Serial.print("Result code: ");
 	Serial.print(dnsResult);
 	Serial.print(" ");
-	Serial.println("-- Wifi Connected. Waiting for sync");
+	Serial.println("-- IP Connected. Waiting for sync");
 	Serial.println("-- Transmit NTP Request");
 #endif // DEBUG_NTPCLIENT
 	if (dnsResult == 1) { //If DNS lookup resulted ok
-		client->sendNTPpacket(client->_timeServerIP);
+		sendNTPpacket(timeServerIP,udp);
 		uint32_t beginWait = millis();
 		while (millis() - beginWait < 1500) {
-			int size = client->_udp.parsePacket();
+			int size = udp.parsePacket();
 			if (size >= NTP_PACKET_SIZE) {
 #ifdef DEBUG_NTPCLIENT
 				Serial.println("-- Receive NTP Response");
 #endif // DEBUG_NTPCLIENT
-				client->_udp.read(client->_ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-				time_t timeValue = client->decodeNtpMessage(client->_ntpPacketBuffer);
-				setSyncInterval(client->_longInterval);
+				udp.read(ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+				time_t timeValue = NTP.decodeNtpMessage(ntpPacketBuffer);
+				setSyncInterval(NTP.getLongInterval());
 #ifdef DEBUG_NTPCLIENT
 				Serial.println("Sync frequency set low");
 #endif // DEBUG_NTPCLIENT
-				client->_udp.stop();
-				client->_lastSyncd = timeValue;
+				udp.stop();
+				NTP.setLastNTPSync(timeValue);
 #ifdef DEBUG_NTPCLIENT
 				Serial.println("Succeccful NTP sync at ");
-				Serial.println(client->getTimeString(client->_lastSyncd));
+				Serial.println(client->getTimeString(NTP.getLastNTPSync()));
 #endif // DEBUG_NTPCLIENT
 				return timeValue;
 			}
@@ -86,15 +114,15 @@ time_t getTime() {
 #ifdef DEBUG_NTPCLIENT
 		Serial.println("-- No NTP Response :-(");
 #endif // DEBUG_NTPCLIENT
-		client->_udp.stop();
-		setSyncInterval(client->_shortInterval); // Retry connection more often
+		udp.stop();
+		setSyncInterval(NTP.getShortInterval()); // Retry connection more often
 		return 0; // return 0 if unable to get the time 
 	}
 	else {
 #ifdef DEBUG_NTPCLIENT
 		Serial.println("-- Invalid address :-((");
 #endif // DEBUG_NTPCLIENT
-		client->_udp.stop();
+		udp.stop();
 
 		return 0; // return 0 if unable to get the time 
 	}
@@ -132,7 +160,6 @@ boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeO
 	}
 	//sntp_init();
 	setDayLight(daylight);
-	_lastSyncd = 0;
 
 	if (!setInterval(DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
 		return false;
@@ -156,7 +183,7 @@ boolean AvrNTPClient::stop() {
 	return true;
 }
 
-time_t AvrNTPClient::decodeNtpMessage(byte *messageBuffer) {
+time_t AvrNTPClient::decodeNtpMessage(char *messageBuffer) {
 	unsigned long secsSince1900;
 	// convert four bytes starting at location 40 to a long integer
 	secsSince1900 = (unsigned long)messageBuffer[40] << 24;
@@ -189,10 +216,6 @@ time_t AvrNTPClient::decodeNtpMessage(byte *messageBuffer) {
 #endif // DEBUG_NTPCLIENT		
 	return timeTemp;
 }
-
-/*void ntpClient::nullSyncProvider() {
-
-}*/
 
 String AvrNTPClient::getTimeStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
@@ -370,31 +393,53 @@ boolean AvrNTPClient::summertime(int year, byte month, byte day, byte hour, byte
 		return false;
 }
 
-// send an NTP request to the time server at the given address
-boolean AvrNTPClient::sendNTPpacket(IPAddress &address) {
-	// set all bytes in the buffer to 0
-	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE);
-	// Initialize values needed to form NTP request
-	// (see URL above for details on the packets)
-	_ntpPacketBuffer[0] = 0b11100011;   // LI, Version, Mode
-	_ntpPacketBuffer[1] = 0;     // Stratum, or type of clock
-	_ntpPacketBuffer[2] = 6;     // Polling Interval
-	_ntpPacketBuffer[3] = 0xEC;  // Peer Clock Precision
-								 // 8 bytes of zero for Root Delay & Root Dispersion
-	_ntpPacketBuffer[12] = 49;
-	_ntpPacketBuffer[13] = 0x4E;
-	_ntpPacketBuffer[14] = 49;
-	_ntpPacketBuffer[15] = 52;
-	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp: 
-	_udp.beginPacket(address, 123); //NTP requests are to port 123
-	_udp.write(_ntpPacketBuffer, NTP_PACKET_SIZE);
-	_udp.endPacket();
-	return true;
-}
-
 time_t AvrNTPClient::getLastNTPSync() {
 	return _lastSyncd;
+}
+
+void AvrNTPClient::setLastNTPSync(time_t moment) {
+	_lastSyncd = moment;
+}
+
+time_t AvrNTPClient::getUptime()
+{
+	_uptime = _uptime + (millis() - _uptime);
+	return _uptime / 1000;
+}
+
+String AvrNTPClient::getUptimeString() {
+	unsigned int days;
+	unsigned char hours;
+	unsigned char minutes;
+	unsigned char seconds;
+
+	long uptime = getUptime();
+
+	seconds = uptime % SECS_PER_MIN;
+	uptime -= seconds;
+	minutes = (uptime % SECS_PER_HOUR) / SECS_PER_MIN;
+	uptime -= minutes * SECS_PER_MIN;
+	hours = (uptime % SECS_PER_DAY) / SECS_PER_HOUR;
+	uptime -= hours * SECS_PER_HOUR;
+	days = uptime / SECS_PER_DAY;
+
+	String uptimeStr = "";
+	char buffer[20];
+	sprintf(buffer, "%4d days %02d:%02d:%02d", days, hours, minutes, seconds);
+	uptimeStr += buffer;
+
+	return uptimeStr;
+}
+
+time_t AvrNTPClient::getFirstSync()
+{
+	if (!_firstSync) {
+		if (timeStatus() == timeSet) {
+			_firstSync = now() - getUptime();
+		}
+	}
+
+	return _firstSync;
 }
 
 #endif // ARDUINO_ARCH_AVR

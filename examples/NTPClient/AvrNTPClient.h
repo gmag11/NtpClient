@@ -34,7 +34,7 @@
 
 #ifdef ethernet_h
 #define NETWORK_TYPE NETWORK_W5100
-#endif ethernet_h
+#endif // ethernet_h
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -206,7 +206,20 @@ public:
 	*/
 	void setDayLight(boolean daylight);
 
+	/**
+	* Decode NTP response contained in buffer.
+	* @param[in] Pointer to message buffer.
+	* @param[out] Decoded time from message, 0 if error ocurred.
+	*/
+	time_t decodeNtpMessage(char *messageBuffer);
+
 	time_t getLastNTPSync();
+
+	void setLastNTPSync(time_t moment);
+
+	String getUptimeString();
+	time_t getUptime();
+	time_t getFirstSync();
 
 protected:
 	
@@ -222,7 +235,9 @@ protected:
 	static boolean instanceFlag; //Flag to control that instance has been created
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
-	time_t _lastSyncd; //Stored time of last successful sync
+	time_t _lastSyncd = 0; //Stored time of last successful sync
+	time_t _firstSync = 0;
+	unsigned long _uptime = 0;
 
 	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
@@ -231,14 +246,14 @@ private:
 
 	int _udpPort; //UDP port number to send request from
 	char* _ntpServerName; //NTP server name
-	IPAddress _timeServerIP; //NTP server IP address
+	//IPAddress _timeServerIP; //NTP server IP address
 
 #if NETWORK_TYPE == NETWORK_W5100
-	EthernetUDP _udp;
+	//EthernetUDP _udp;
 #endif // NETWORK_TYPE
 
 
-	byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request and response messages
+	//byte _ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request and response messages
 	
 	/**
 	* Sends NTP request packet to given IP address.
@@ -246,13 +261,6 @@ private:
 	* @param[out] True if everything went ok.
 	*/
 	boolean sendNTPpacket(IPAddress &address);
-
-	/**
-	* Decode NTP response contained in buffer.
-	* @param[in] Pointer to message buffer.
-	* @param[out] Decoded time from message, 0 if error ocurred.
-	*/
-	time_t decodeNtpMessage(byte *messageBuffer);
 
 };
 

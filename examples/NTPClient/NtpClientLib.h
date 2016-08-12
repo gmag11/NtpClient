@@ -15,13 +15,9 @@
 
 #include <TimeLib.h>
 
-#define NETWORK_ESP8266         (1)
-#define NETWORK_W5100           (2)
-#define NETWORK_ENC28J60        (3)
-
 #ifdef ARDUINO_ARCH_ESP8266
 #include "ESPNTPClient.h"
-#elif defined (ARDUINO_ARCH_AVR)
+#elif defined ARDUINO_ARCH_AVR
 #include "AvrNTPClient.h"
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
