@@ -50,7 +50,7 @@ void setup()
 			;
 	}
 
-	NTP.begin("pool.ntp.org", 1, true);
+	NTP.begin("pool.ntp.org", 1, true); // <-- Only this line is needed
     NTP.setInterval(3600); // OPTIONAL. Default period is 1800 seconds.
 }
 
@@ -89,7 +89,8 @@ void setup()
 	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-	NTP.begin("es.pool.ntp.org", 1, true);
+	
+    NTP.begin("es.pool.ntp.org", 1, true); // <-- Only this line is needed
 	NTP.setInterval(3600); // OPTIONAL. Default period is 1800 seconds.
 }
 
@@ -122,5 +123,5 @@ This library makes use of [Time] library. You need to add it to use NTPClientLib
 [Time]: https://github.com/PaulStoffregen/Time.git
 _________________________________________________________
 
-ntpClient.ino is an example of how this library works. It shows time every second as soon it gets synchronized.
+ntpClient.ino is an example of how this library works. It shows current time and uptime every 5 seconds as soon it gets synchronized.
 [this]: https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi/examples/NTPClient
