@@ -44,10 +44,6 @@
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
-#ifdef WEB_TIME_SYNC
-PROGMEM const char HTTP_Request[] = "GET / HTTP/1.1 \r\n\r\n";
-#endif // WEB_TIME_SYNC
-
 class AvrNTPClient {
 	
 public:
