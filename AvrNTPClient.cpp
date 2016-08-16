@@ -11,8 +11,16 @@
 
 #define DBG_PORT Serial
 
-AvrNTPClient NTP;
+#ifdef DEBUG_NTPCLIENT
+#define DEBUGLOG(A) DBG_PORT.print(A)
+#define DEBUGLOGCR(A) DBG_PORT.println(A)
+#else
+#define DEBUGLOG(A)
+#define DEBUGLOGCR(A)
+#endif
 
+
+AvrNTPClient NTP;
 
 #if NETWORK_TYPE == NETWORK_W5100
 // send an NTP request to the time server at the given address
@@ -50,65 +58,52 @@ time_t getTime() {
 	IPAddress timeServerIP; //NTP server IP address
 	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
-#ifdef DEBUG_NTPCLIENT
-	Serial.println("Starting UDP");
-#endif // DEBUG_NTPCLIENT
+
+	DEBUGLOGCR(F("Starting UDP"));
 	udp.begin(DEFAULT_NTP_PORT);
-#ifdef DEBUG_NTPCLIENT
-	Serial.print("Local port: ");
-	Serial.println(client->_udp.localPort());
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG(F("Remote port: "));
+	DEBUGLOGCR(udp.remotePort());
 	while (udp.parsePacket() > 0); // discard any previously received packets
 	dns.begin(Ethernet.dnsServerIP());
 	uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
-#ifdef DEBUG_NTPCLIENT
-	Serial.print("NTP Server hostname: ");
-	Serial.println(NTP.getNtpServerName());
-	Serial.print("NTP Server IP address: ");
-	Serial.println(timeServerIP);
-	Serial.print("Result code: ");
-	Serial.print(dnsResult);
-	Serial.print(" ");
-	Serial.println("-- IP Connected. Waiting for sync");
-	Serial.println("-- Transmit NTP Request");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG(F("NTP Server hostname: "));
+	DEBUGLOGCR(NTP.getNtpServerName());
+	DEBUGLOG(F("NTP Server IP address: "));
+	DEBUGLOGCR(timeServerIP);
+	DEBUGLOG(F("Result code: "));
+	DEBUGLOG(dnsResult);
+	DEBUGLOG(" ");
+	DEBUGLOGCR(F("-- IP Connected. Waiting for sync"));
+	DEBUGLOGCR(F("-- Transmit NTP Request"));
+
 	if (dnsResult == 1) { //If DNS lookup resulted ok
 		sendNTPpacket(timeServerIP,udp);
 		uint32_t beginWait = millis();
 		while (millis() - beginWait < 1500) {
 			int size = udp.parsePacket();
 			if (size >= NTP_PACKET_SIZE) {
-#ifdef DEBUG_NTPCLIENT
-				Serial.println("-- Receive NTP Response");
-#endif // DEBUG_NTPCLIENT
+				DEBUGLOGCR(F("-- Receive NTP Response"));
 				udp.read(ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 				time_t timeValue = NTP.decodeNtpMessage(ntpPacketBuffer);
 				setSyncInterval(NTP.getLongInterval());
-#ifdef DEBUG_NTPCLIENT
-				Serial.println("Sync frequency set low");
-#endif // DEBUG_NTPCLIENT
+				NTP.getFirstSync(); // Set firstSync value if not set before
+				DEBUGLOGCR(F("Sync frequency set low"));
 				udp.stop();
 				NTP.setLastNTPSync(timeValue);
-#ifdef DEBUG_NTPCLIENT
-				Serial.println("Succeccful NTP sync at ");
-				Serial.println(client->getTimeString(NTP.getLastNTPSync()));
-#endif // DEBUG_NTPCLIENT
+				DEBUGLOG(F("Succeccful NTP sync at "));
+				DEBUGLOGCR(NTP.getTimeDateString(NTP.getLastNTPSync()));
+
 				return timeValue;
 			}
 		}
-#ifdef DEBUG_NTPCLIENT
-		Serial.println("-- No NTP Response :-(");
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOGCR(F("-- No NTP Response :-("));
 		udp.stop();
 		setSyncInterval(NTP.getShortInterval()); // Retry connection more often
 		return 0; // return 0 if unable to get the time 
 	}
 	else {
-#ifdef DEBUG_NTPCLIENT
-		Serial.println("-- Invalid address :-((");
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOGCR(F("-- Invalid address :-(("));
 		udp.stop();
-
 		return 0; // return 0 if unable to get the time 
 	}
 }
@@ -131,9 +126,7 @@ boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeO
 	if (!setInterval(DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
 		return false;
 }
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.println("Time sync started");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOGCR(F("Time sync started"));
 
 	setSyncInterval(getShortInterval());
 	setSyncProvider(getTime);
@@ -143,9 +136,7 @@ boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeO
 
 boolean AvrNTPClient::stop() {
 	setSyncProvider(NULL);
-#ifdef DEBUG_NTPCLIENT
-	Serial.println("Time sync disabled");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOGCR(F("Time sync disabled"));
 
 	return true;
 }
@@ -164,23 +155,15 @@ time_t AvrNTPClient::decodeNtpMessage(char *messageBuffer) {
 	if (_daylight) {
 		if (summertime(year(timeTemp), month(timeTemp), day(timeTemp), hour(timeTemp), _timeZone)) {
 			timeTemp += SECS_PER_HOUR;
-#ifdef DEBUG_NTPCLIENT
-			Serial.println("Summer Time");
-#endif // DEBUG_NTPCLIENT		
+			DEBUGLOGCR(F("Summer Time"));
 		}
-#ifdef DEBUG_NTPCLIENT
 		else {
-			Serial.println("Winter Time");
+			DEBUGLOGCR(F("Winter Time"));
 		}
-#endif // DEBUG_NTPCLIENT		
 	}
-#ifdef DEBUG_NTPCLIENT
-
 	else {
-		Serial.println("No daylight");
-
+		DEBUGLOGCR(F("No daylight"));
 	}
-#endif // DEBUG_NTPCLIENT		
 	return timeTemp;
 }
 
@@ -195,7 +178,7 @@ String AvrNTPClient::getTimeStr(time_t moment) {
 
 		return timeStr;
 	}
-	else return "Time not set";
+	else return F("Time not set");
 }
 
 String AvrNTPClient::getTimeStr() {
@@ -214,7 +197,7 @@ String AvrNTPClient::getDateStr(time_t moment) {
 
 		return timeStr;
 	}
-	else return "Date not set";
+	else return F("Date not set");
 }
 
 String AvrNTPClient::getDateStr() {
@@ -230,7 +213,7 @@ String AvrNTPClient::getTimeDateString(time_t moment) {
 
 		return timeStr;
 	} else {
-		return "Time not set";
+		return F("Time not set");
 	}
 }
 
@@ -277,9 +260,8 @@ String AvrNTPClient::getNtpServerName()
 boolean AvrNTPClient::setNtpServerName(String ntpServerName) {
 	char * name = (char *)malloc((ntpServerName.length() + 1) * sizeof(char));
 	ntpServerName.toCharArray(name, ntpServerName.length() + 1);
-#ifdef DEBUG_NTPCLIENT
-	Serial.printf("NTP server set to %s" + name);
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG(F("NTP server set to "));
+	DEBUGLOGCR(name);
 	free(_ntpServerName);
 	_ntpServerName = name;
 	return true;
@@ -290,10 +272,10 @@ boolean AvrNTPClient::setInterval(int interval)
 	if (interval >= 10) {
 		if (_longInterval != interval) {
 			_longInterval = interval;
-#ifdef DEBUG_NTPCLIENT
-			Serial.println("Sync interval set to " + interval);
-#endif // DEBUG_NTPCLIENT
-			setSyncInterval(interval);
+			DEBUGLOG(F("Sync interval set to "));
+			DEBUGLOGCR(interval);
+			if(timeStatus() != timeSet)
+				setSyncInterval(interval);
 		}
 		return true;
 	}
@@ -311,10 +293,8 @@ boolean AvrNTPClient::setInterval(int shortInterval, int longInterval) {
 		else {
 			setSyncInterval(longInterval);
 		}
-#ifdef DEBUG_NTPCLIENT
-		Serial.print("Short sync interval set to "); Serial.println(shortInterval);
-		Serial.print("Long sync interval set to "); Serial.println(longInterval);
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOG(F("Short sync interval set to ")); DEBUGLOGCR(shortInterval);
+		DEBUGLOG(F("Long sync interval set to ")); DEBUGLOGCR(longInterval);
 		return true;
 	}
 	else
@@ -326,10 +306,8 @@ boolean AvrNTPClient::setTimeZone(int timeZone)
 {
 	if (timeZone >= -11 || timeZone <= 13) {
 		_timeZone = timeZone;
-#ifdef DEBUG_NTPCLIENT
-		Serial.println("Time zone set to " + _timeZone);
-#endif // DEBUG_NTPCLIENT
-
+		DEBUGLOGCR(F("Time zone set to "));
+		DEBUGLOGCR(_timeZone);
 		return true;
 	}
 	else
@@ -339,11 +317,8 @@ boolean AvrNTPClient::setTimeZone(int timeZone)
 void AvrNTPClient::setDayLight(boolean daylight)
 {
 	_daylight = daylight;
-#ifdef DEBUG_NTPCLIENT
-	Serial.print("--Set daylight saving to ");
-	Serial.println(daylight);
-
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG(F("--Set daylight saving to "));
+	DEBUGLOGCR(daylight);
 }
 
 //

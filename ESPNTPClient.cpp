@@ -8,6 +8,13 @@
 
 #define DBG_PORT Serial
 
+#ifdef DEBUG_NTPCLIENT
+#define DEBUGLOG(...) DBG_PORT.printf(__VA_ARGS__)
+#else
+#define DEBUGLOG(...)
+#endif
+
+
 ESPNTPClient NTP;
 
 ESPNTPClient::ESPNTPClient()
@@ -21,9 +28,7 @@ bool ESPNTPClient::setNtpServerName(int idx, String ntpServerName)
 		sntp_stop();
 		ntpServerName.toCharArray(buffer, ntpServerName.length()+1);
 		sntp_setservername(idx, buffer);
-#ifdef DEBUG_NTPCLIENT
-		DBG_PORT.printf("NTP server %d set to: %s \r\n", idx, buffer);
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOG("NTP server %d set to: %s \r\n", idx, buffer);
 		sntp_init();
 		return true;
 	}
@@ -44,9 +49,7 @@ bool ESPNTPClient::setTimeZone(int timeZone)
 	sntp_stop();
 	bool result = sntp_set_timezone(timeZone);
 	sntp_init();
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.printf("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
 	return result;
 	//return true;
 	//}
@@ -64,51 +67,33 @@ void ESPNTPClient::setLastNTPSync(time_t moment) {
 
 time_t getTime()
 {
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.print("-- NTP Server hostname: ");
-	DBG_PORT.println(sntp_getservername(0));
-	DBG_PORT.println("-- Transmit NTP Request");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("-- NTP Server hostname: %s\r\n", sntp_getservername(0));
+	DEBUGLOG("-- Transmit NTP Request\r\n");
 	uint32 secsSince1970 = sntp_get_current_timestamp();
 	NTP.getUptime();
 	if (secsSince1970) {
 		setSyncInterval(NTP.getInterval()); // Normal refresh frequency
-#ifdef DEBUG_NTPCLIENT
-		DBG_PORT.println("Sync frequency set low");
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOG("Sync frequency set low\r\n");
 		if (NTP.getDayLight()) {
 			if (NTP.summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), NTP.getTimeZone())) {
 				secsSince1970 += SECS_PER_HOUR;
-#ifdef DEBUG_NTPCLIENT
-				DBG_PORT.println("Summer Time");
-#endif // DEBUG_NTPCLIENT
+				DEBUGLOG("Summer Time\r\n");
 			}
-#ifdef DEBUG_NTPCLIENT
 			else {
-				DBG_PORT.println("Winter Time");
+				DEBUGLOG("Winter Time\r\n");
 			}
-#endif // DEBUG_NTPCLIENT		
+	
 		}
-#ifdef DEBUG_NTPCLIENT
 		else {
-			DBG_PORT.println("No daylight");
+			DEBUGLOG("No daylight\r\n");
 
 		}
-#endif // DEBUG_NTPCLIENT
-		/*if (!NTP.getFirstSync())
-			NTP.storeFirstSync(secsSince1970);*/
 		NTP.getFirstSync();
 		NTP.setLastNTPSync(secsSince1970);
-#ifdef DEBUG_NTPCLIENT
-		DBG_PORT.print("Succeccful NTP sync at ");
-		DBG_PORT.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
-#endif // DEBUG_NTPCLIENT
-
+		DEBUGLOG("Succeccful NTP sync at %s\r\n", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
 	}
 	else {
-#ifdef DEBUG_NTPCLIENT
-		DBG_PORT.println("-- NTP error :-(");
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOG("-- NTP error :-(\r\n");
 		setSyncInterval(NTP.getShortInterval()); // Fast refresh frequency, until successful sync
 	}
 
@@ -130,9 +115,7 @@ boolean ESPNTPClient::begin(String ntpServerName, int timeOffset, boolean daylig
 	if (!setInterval(DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
 		return false;
 	}
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.println("Time sync started");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("Time sync started\r\n");
 
 	setSyncInterval(getShortInterval());
 	setSyncProvider(getTime);
@@ -142,11 +125,8 @@ boolean ESPNTPClient::begin(String ntpServerName, int timeOffset, boolean daylig
 
 boolean ESPNTPClient::stop() {
 	setSyncProvider(NULL);
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.println("Time sync disabled");
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("Time sync disabled\r\n");
 	sntp_stop();
-
 	return true;
 }
 
@@ -155,16 +135,13 @@ boolean ESPNTPClient::setInterval(int interval)
 	if (interval >= 10) {
 		if (_longInterval != interval) {
 			_longInterval = interval;
-#ifdef DEBUG_NTPCLIENT
-			DBG_PORT.println("Long sync interval set to " + interval);
-#endif // DEBUG_NTPCLIENT
-			setSyncInterval(interval);
+			DEBUGLOG("Long sync interval set to %d", interval);
+			if (timeStatus() != timeSet)
+				setSyncInterval(interval);
 		}
 		return true;
 	}
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.printf("Error setting interval %d\r\n", interval);
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("Error setting interval %d\r\n", interval);
 
 	return false;
 }
@@ -179,17 +156,11 @@ boolean ESPNTPClient::setInterval(int shortInterval, int longInterval) {
 		else {
 			setSyncInterval(longInterval);
 		}
-#ifdef DEBUG_NTPCLIENT
-		DBG_PORT.print("Short sync interval set to ");
-		DBG_PORT.println(shortInterval);
-		DBG_PORT.print("Long sync interval set to "); 
-		DBG_PORT.println(longInterval);
-#endif // DEBUG_NTPCLIENT
+		DEBUGLOG("Short sync interval set to %d\r\n", shortInterval);
+		DEBUGLOG("Long sync interval set to %d\r\n", longInterval);
 		return true;
 	}
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.printf("Error setting interval %d %d\r\n", shortInterval, longInterval);
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("Error setting interval. Short: %d Long: %d\r\n", shortInterval, longInterval);
 	return false;
 }
 
@@ -206,10 +177,7 @@ int ESPNTPClient::getShortInterval()
 void ESPNTPClient::setDayLight(boolean daylight)
 {
 	_daylight = daylight;
-#ifdef DEBUG_NTPCLIENT
-	DBG_PORT.print("--Set daylight saving to ");
-	DBG_PORT.println(daylight);
-#endif // DEBUG_NTPCLIENT
+	DEBUGLOG("--Set daylight %s", daylight? "ON" : "OFF");
 }
 
 boolean ESPNTPClient::getDayLight()
