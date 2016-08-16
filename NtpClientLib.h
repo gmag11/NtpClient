@@ -16,9 +16,9 @@
 #include <TimeLib.h>
 
 #ifdef ARDUINO_ARCH_ESP8266
-#include "ESPNTPClient.h"
+#include <ESPNTPClient.h>
 #elif defined ARDUINO_ARCH_AVR
-#include "AvrNTPClient.h"
+#include <AvrNTPClient.h>
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
 #endif

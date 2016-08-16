@@ -6,7 +6,7 @@
 */
 
 #include <TimeLib.h>
-#include "WifiConfig.h"
+//#include "WifiConfig.h"
 #include <NtpClientLib.h>
 
 #ifdef ARDUINO_ARCH_ESP8266

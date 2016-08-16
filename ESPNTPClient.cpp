@@ -4,7 +4,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 
-#include "ESPNTPClient.h"
+#include <ESPNTPClient.h>
 
 #define DBG_PORT Serial
 
@@ -48,7 +48,7 @@ bool ESPNTPClient::setTimeZone(int timeZone)
 	DBG_PORT.printf("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
 #endif // DEBUG_NTPCLIENT
 	return result;
-		//return true;
+	//return true;
 	//}
 	//return false;
 }
@@ -97,6 +97,7 @@ time_t getTime()
 #endif // DEBUG_NTPCLIENT
 		/*if (!NTP.getFirstSync())
 			NTP.storeFirstSync(secsSince1970);*/
+		NTP.getFirstSync();
 		NTP.setLastNTPSync(secsSince1970);
 #ifdef DEBUG_NTPCLIENT
 		DBG_PORT.print("Succeccful NTP sync at ");
@@ -172,7 +173,7 @@ boolean ESPNTPClient::setInterval(int shortInterval, int longInterval) {
 	if (shortInterval >= 10 && longInterval >= 10) {
 		_shortInterval = shortInterval;
 		_longInterval = longInterval;
-		if (timeStatus() == timeNotSet) {
+		if (timeStatus() != timeSet) {
 			setSyncInterval(shortInterval);
 		}
 		else {

@@ -7,33 +7,19 @@
 
 #ifdef ARDUINO_ARCH_AVR
 
-#include "AvrNTPClient.h"
+#include <AvrNTPClient.h>
 
 #define DBG_PORT Serial
 
 AvrNTPClient NTP;
 
-/*ntpClient *ntpClient::getInstance(String ntpServerName, int timeOffset, boolean daylight) {
-	if (!instanceFlag) {
-		s_client = new ntpClient(ntpServerName,timeOffset,daylight);
-		
-		instanceFlag = true;
-		return s_client;
-	} else {
-		s_client->setNtpServerName(ntpServerName);
-		s_client->setTimeZone(timeOffset);
-		s_client->setDayLight(daylight);
-		
-		return s_client;
-	}
-}*/
 
 #if NETWORK_TYPE == NETWORK_W5100
 // send an NTP request to the time server at the given address
 boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
 	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
 
-										   // set all bytes in the buffer to 0
+	// set all bytes in the buffer to 0
 	memset(ntpPacketBuffer, 0, NTP_PACKET_SIZE);
 	// Initialize values needed to form NTP request
 	// (see URL above for details on the packets)
@@ -53,7 +39,6 @@ boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
 	udp.endPacket();
 	return true;
 }
-
 
 /**
 * Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
@@ -130,25 +115,7 @@ time_t getTime() {
 
 #endif //NETWORK_TYPE == W5100
 
-
 AvrNTPClient::AvrNTPClient() {
-	/*_udpPort = DEFAULT_NTP_PORT;
-	memset(_ntpServerName, 0, NTP_SERVER_NAME_SIZE); //Initialize ntp server name char[]
-	memset(_ntpPacketBuffer, 0, NTP_PACKET_SIZE); //Initialize packet buffer[]
-	ntpServerName.toCharArray(_ntpServerName, NTP_SERVER_NAME_SIZE);
-#ifdef DEBUG_NTPCLIENT
-	Serial.print("ntpClient instance created: ");
-	Serial.println(_ntpServerName);
-#endif // DEBUG_NTPCLIENT
-	_shortInterval = DEFAULT_NTP_SHORTINTERVAL;
-	_longInterval = DEFAULT_NTP_INTERVAL;
-	if (timeOffset >= -12 && timeOffset <= 12)
-		_timeZone = timeOffset;
-	else
-		_timeZone = 0;
-	_daylight = daylight;
-	_lastSyncd = 0;
-	s_client = this;*/
 }
 
 boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false) {
@@ -338,7 +305,7 @@ boolean AvrNTPClient::setInterval(int shortInterval, int longInterval) {
 	if (shortInterval >= 10 && _longInterval >= 10) {
 		_shortInterval = shortInterval;
 		_longInterval = longInterval;
-		if (timeStatus() == timeNotSet) {
+		if (timeStatus() != timeSet) {
 			setSyncInterval(shortInterval);
 		}
 		else {
@@ -403,7 +370,7 @@ void AvrNTPClient::setLastNTPSync(time_t moment) {
 
 time_t AvrNTPClient::getUptime()
 {
-	_uptime = _uptime + (millis() - _uptime);
+	_uptime = _uptime + (millis() - _uptime); // Add time since last getUptime call
 	return _uptime / 1000;
 }
 
