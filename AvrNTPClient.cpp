@@ -5,9 +5,11 @@
  Editor:	http://www.visualmicro.com
 */
 
-#ifdef ARDUINO_ARCH_AVR
 
-#include <AvrNTPClient.h>
+#include <NtpClientLib.h>
+#include "AvrNTPClient.h"
+
+#ifdef ARDUINO_ARCH_AVR
 
 #define DBG_PORT Serial
 
@@ -22,7 +24,6 @@
 
 AvrNTPClient NTP;
 
-#if NETWORK_TYPE == NETWORK_W5100
 // send an NTP request to the time server at the given address
 boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
 	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
@@ -54,7 +55,11 @@ boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
 */
 time_t getTime() {
 	DNSClient dns;
+#if NETWORK_TYPE == NETWORK_W5100
 	EthernetUDP udp;
+#elif NETWORK_TYPE == NETWORK_WIFI101
+	WIFIUDP udp;
+#endif
 	IPAddress timeServerIP; //NTP server IP address
 	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
@@ -108,7 +113,6 @@ time_t getTime() {
 	}
 }
 
-#endif //NETWORK_TYPE == W5100
 
 AvrNTPClient::AvrNTPClient() {
 }

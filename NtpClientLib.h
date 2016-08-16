@@ -15,9 +15,22 @@
 
 #include <TimeLib.h>
 
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+
+#define NETWORK_W5100           (1)
+#define NETWORK_ENC28J60        (2)
+#define NETWORK_WIFI101			(3)
+#define NETWORK_ESP8266			(100)
+
 #ifdef ARDUINO_ARCH_ESP8266
+#define NETWORK_TYPE NETWORK_ESP8266 
 #include <ESPNTPClient.h>
 #elif defined ARDUINO_ARCH_AVR
+#define NETWORK_TYPE NETWORK_WIFI101 // Define Arduino network type here
 #include <AvrNTPClient.h>
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."

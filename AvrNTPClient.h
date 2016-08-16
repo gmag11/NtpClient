@@ -23,18 +23,16 @@
 
 #include <TimeLib.h>
 
-#define NETWORK_W5100           (1)
-#define NETWORK_ENC28J60        (2)
-
 #include <SPI.h>
+#if NETWORK_TYPE == NETWORK_W5100
 #include <EthernetUdp.h>
 #include <Ethernet.h>
+#elif NETWORK_TYPE == NETWORK_WIFI101
+#include <WiFi101.h>
+#include <WiFiUdp.h>
+#endif
 #include <Dns.h>
 #include <Dhcp.h>
-
-#ifdef ethernet_h
-#define NETWORK_TYPE NETWORK_W5100
-#endif // ethernet_h
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -246,6 +244,8 @@ private:
 
 #if NETWORK_TYPE == NETWORK_W5100
 	//EthernetUDP _udp;
+#elif NETWORK_TYPE == NETWORK_WIFI101
+	WiFiUDP _udp;
 #endif // NETWORK_TYPE
 
 
