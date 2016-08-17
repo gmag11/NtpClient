@@ -5,9 +5,10 @@
  Editor:	http://www.visualmicro.com
 */
 
+#include <Ticker.h>
 #include <TimeLib.h>
 #include "WifiConfig.h"
-#include <NtpClientLib.h>
+#include "NtpClientLib.h"
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>
