@@ -11,13 +11,16 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #ifdef ESP8266
 extern "C" {
 #include "user_interface.h"
 #include "sntp.h"
 }
+#include <functional>
+using namespace std;
+using namespace placeholders;
 #endif
 
 #include <TimeLib.h>
@@ -122,7 +125,7 @@ public:
 	* Kept in public section to allow direct NTP request.
 	* @param[out] Time in UNIX time format.
 	*/
-	static time_t getTime(void* self);
+	time_t getTime();
 
 	/**
 	* Stops time synchronization.
@@ -143,7 +146,7 @@ public:
 	* @param[in] New interval for normal operation, in seconds.
 	* @param[out] True if everything went ok.
 	*/
-	boolean setInterval(int shortInterval, int longInterval);
+	bool setInterval(int shortInterval, int longInterval);
 
 	/**
 	* Gets sync period.
@@ -173,7 +176,7 @@ public:
 	* Get daylight time saving option.
 	* @param[out] true is daylight time savings apply.
 	*/
-	boolean getDayLight();
+	bool getDayLight();
 
 	/**
 	* Convert current time to a String.

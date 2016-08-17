@@ -48,6 +48,7 @@ void setup()
 	}
 #endif
 	NTP.begin("es.pool.ntp.org", 1, true);
+	NTP.setInterval(13,63);
 }
 
 void loop()
@@ -70,6 +71,7 @@ void loop()
 
 		i++;
 	}
+	delay(0);
 #ifdef ARDUINO_ARCH_AVR
 	Ethernet.maintain(); // Check DHCP for renewal
 #endif // ARDUINO_ARCH_AVR

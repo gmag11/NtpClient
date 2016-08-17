@@ -65,7 +65,7 @@ int NTPClient::getTimeZone()
 	_lastSyncd = moment;
 }*/
 
-time_t NTPClient::getTime(void* self)
+time_t NTPClient::getTime()
 {
 	DEBUGLOG("-- NTP Server hostname: %s\r\n", sntp_getservername(0));
 	DEBUGLOG("-- Transmit NTP Request\r\n");
@@ -74,8 +74,8 @@ time_t NTPClient::getTime(void* self)
 	if (secsSince1970) {
 		setSyncInterval(NTP.getInterval()); // Normal refresh frequency
 		DEBUGLOG("Sync frequency set low\r\n");
-		if (NTP.getDayLight()) {
-			if (NTP.summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), NTP.getTimeZone())) {
+		if (getDayLight()) {
+			if (summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), getTimeZone())) {
 				secsSince1970 += SECS_PER_HOUR;
 				DEBUGLOG("Summer Time\r\n");
 			}
@@ -88,13 +88,17 @@ time_t NTPClient::getTime(void* self)
 			DEBUGLOG("No daylight\r\n");
 
 		}
-		NTP.getFirstSync();
-		NTP.setLastNTPSync(secsSince1970);
-		DEBUGLOG("Succeccful NTP sync at %s\r\n", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
+		getFirstSync();
+		_lastSyncd = secsSince1970;
+		if (!_firstSync) {
+			_firstSync = secsSince1970;
+			DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
+		}
+		DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
 	}
 	else {
 		DEBUGLOG("-- NTP error :-(\r\n");
-		setSyncInterval(NTP.getShortInterval()); // Fast refresh frequency, until successful sync
+		setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
 	}
 
 	return secsSince1970;
@@ -118,7 +122,7 @@ bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
 	DEBUGLOG("Time sync started\r\n");
 
 	setSyncInterval(getShortInterval());
-	setSyncProvider(getTime);
+	setSyncProvider(std::bind(&NTPClient::getTime,this));
 
 	return true;
 }
@@ -135,8 +139,8 @@ bool NTPClient::setInterval(int interval)
 	if (interval >= 10) {
 		if (_longInterval != interval) {
 			_longInterval = interval;
-			DEBUGLOG("Long sync interval set to %d", interval);
-			if (timeStatus() != timeSet)
+			DEBUGLOG("Long sync interval set to %d\r\n", interval);
+			if (timeStatus() == timeSet)
 				setSyncInterval(interval);
 		}
 		return true;
@@ -177,7 +181,7 @@ int NTPClient::getShortInterval()
 void NTPClient::setDayLight(bool daylight)
 {
 	_daylight = daylight;
-	DEBUGLOG("--Set daylight %s", daylight? "ON" : "OFF");
+	DEBUGLOG("--Set daylight %s\r\n", daylight? "ON" : "OFF");
 }
 
 bool NTPClient::getDayLight()
