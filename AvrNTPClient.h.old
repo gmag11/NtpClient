@@ -56,16 +56,6 @@ public:
 	AvrNTPClient();
 
 	/**
-	* Gets ntpClient instance changing parameters if it already exists or creates it if does not.
-	* @param[in] NTP server name.
-	* @param[in] Time offset from UTC.
-	* @param[out] Pointer to ntpClient instance
-	*/
-	//static ntpClient* getInstance(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false);
-
-	//virtual ~ntpClient() {};
-
-	/**
 	* Starts time synchronization.
 	* @param[out] true if everything went ok.
 	*/
@@ -156,16 +146,11 @@ public:
 	*/
 	String getNtpServerName();
 
-		/**
+	/**
 	* Gets timezone.
 	* @param[out] Time offset in hours (plus or minus).
 	*/
 	int getTimeZone();
-
-	/**
-	* Gets last successful sync time in UNIX format.
-	* @param[out] Last successful sync time. 0 equals never.
-	*/
 
 	/**
 	* Changes sync period.
@@ -209,16 +194,48 @@ public:
 	*/
 	time_t decodeNtpMessage(char *messageBuffer);
 
+	/**
+	* Get last successful synchronization time.
+	* @param[out] Last sync time.
+	*/
 	time_t getLastNTPSync();
 
+	/**
+	* Get last successful synchronization time.
+	* @param[out] Last sync time.
+	*/
 	void setLastNTPSync(time_t moment);
 
+	/**
+	* Get uptime in human readable String format.
+	* @param[out] Last sync time.
+	*/
 	String getUptimeString();
+
+	/**
+	* Get uptime, time since MCU was last rebooted.
+	* @param[out] Uptime.
+	*/
 	time_t getUptime();
+
+	/**
+	* Get first successful synchronization time after boot.
+	* @param[out] First sync time.
+	*/
 	time_t getFirstSync();
 
 protected:
 	
+
+	//??int _timeZone; //Local time zone. Added to NTP time
+	boolean _daylight; //Does this time zone have daylight saving?
+	//static boolean instanceFlag; //Flag to control that instance has been created
+	int _shortInterval; //Interval to set periodic time sync until first synchronization.
+	int _longInterval; //Interval to set periodic time sync
+	time_t _lastSyncd = 0; //Stored time of last successful sync
+	time_t _firstSync = 0;
+	unsigned long _uptime = 0;
+
 	/**
 	* Helper function to add leading 0 to hour, minutes or seconds if < 10.
 	* @param[in] Digit to evaluate the need of leading 0.
@@ -226,15 +243,9 @@ protected:
 	*/
 	String printDigits(int digits);
 
-	int _timeZone; //Local time zone. Added to NTP time
-	boolean _daylight; //Does this time zone have daylight saving?
-	static boolean instanceFlag; //Flag to control that instance has been created
-	int _shortInterval; //Interval to set periodic time sync until first synchronization.
-	int _longInterval; //Interval to set periodic time sync
-	time_t _lastSyncd = 0; //Stored time of last successful sync
-	time_t _firstSync = 0;
-	unsigned long _uptime = 0;
 
+	/*
+	*/
 	boolean summertime(int year, byte month, byte day, byte hour, byte tzHours);
 
 	

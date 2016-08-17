@@ -4,7 +4,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 
-#include <ESPNTPClient.h>
+#include <NTPClientLib.h>
 
 #define DBG_PORT Serial
 

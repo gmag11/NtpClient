@@ -20,7 +20,7 @@ extern "C" {
 }
 #endif
 
-#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #include <TimeLib.h>
 
