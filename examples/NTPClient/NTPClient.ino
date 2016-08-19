@@ -47,6 +47,19 @@ void setup()
 			;
 	}
 #endif
+	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
+		if (error) {
+			Serial.print("Time Sync error: ");
+			if (error == noResponse)
+				Serial.println("NTP server not reachable");
+			else if (error == invalidAddress)
+				Serial.println("Invalid NTP server address");
+		}
+		else {
+			Serial.print("Got NTP time: ");
+			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
+		}
+	});
 	NTP.begin("es.pool.ntp.org", 1, true);
 	NTP.setInterval(13,63);
 }
