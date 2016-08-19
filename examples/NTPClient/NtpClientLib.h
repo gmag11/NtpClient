@@ -11,7 +11,7 @@
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #ifdef ESP8266
 extern "C" {
@@ -58,6 +58,19 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
+#endif
+
+typedef enum {
+	timeSyncd, // Time successfully got from NTP server
+	noResponse, // No response from server
+	invalidAddress // Address not reachable
+} NTPSyncEvent_t;
+
+#ifdef ARDUINO_ARCH_ESP8266
+#include <functional>
+typedef std::function<void(NTPSyncEvent_t)> onSyncEvent_t;
+#else
+typedef void(*onSyncEvent_t)(NTPSyncEvent_t);
 #endif
 
 class NTPClient{
@@ -253,6 +266,13 @@ public:
 	*/
 	time_t getFirstSync();
 
+	/**
+	* Set a callback that triggers after a sync trial.
+	* @param[in] function with void(NTPSyncEvent_t) or std::function<void(NTPSyncEvent_t)> (only for ESP8266)
+	*				NTPSyncEvent_t equals 0 is there is no error
+	*/
+	void onNTPSyncEvent(onSyncEvent_t handler);
+
 protected:
 
 	bool _daylight; //Does this time zone have daylight saving?
@@ -261,6 +281,8 @@ protected:
 	time_t _lastSyncd = 0; //Stored time of last successful sync
 	time_t _firstSync = 0; //Stored time of first successful sync after boot
 	unsigned long _uptime = 0; // Time since boot
+	onSyncEvent_t onSyncEvent; // Event handler callback
+
 
 	/**
 	* Calculates the daylight saving for a given date.
@@ -279,7 +301,6 @@ protected:
 	* @param[out] Result digit with leading 0 if needed.
 	*/
 	String printDigits(int digits);
-
 
 #ifdef ARDUINO_ARCH_AVR
 private:

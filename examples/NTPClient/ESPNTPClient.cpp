@@ -314,4 +314,8 @@ time_t NTPClient::getLastNTPSync() {
 	return _lastSyncd;
 }
 
+void NTPClient::onNTPSyncEvent(onSyncEvent_t handler) {
+	onSyncEvent = handler;
+}
+
 #endif // ARDUINO_ARCH_ESP8266
