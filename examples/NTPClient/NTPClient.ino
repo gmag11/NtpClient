@@ -5,7 +5,6 @@
  Editor:	http://www.visualmicro.com
 */
 
-#include <Ticker.h>
 #include <TimeLib.h>
 #include "WifiConfig.h"
 #include "NtpClientLib.h"

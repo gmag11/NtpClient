@@ -104,6 +104,13 @@ public:
 	* @param[out] NTP server name.
 	*/
 	String getNtpServerName(int idx = 0);
+
+	/**
+	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
+	* Kept in public section to allow direct NTP request.
+	* @param[out] Time in UNIX time format.
+	*/
+	time_t getTime();
 #endif
 #ifdef ARDUINO_ARCH_AVR
 	/**
@@ -132,13 +139,6 @@ public:
 	* @param[out] Time offset in hours (plus or minus).
 	*/
 	int getTimeZone();
-
-	/**
-	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
-	* Kept in public section to allow direct NTP request.
-	* @param[out] Time in UNIX time format.
-	*/
-	time_t getTime();
 
 	/**
 	* Stops time synchronization.
@@ -243,12 +243,6 @@ public:
 	time_t getLastNTPSync();
 
 	/**
-	* Set last successful synchronization time.
-	* @param[out] Last sync time.
-	*/
-	//void setLastNTPSync(time_t moment);
-
-	/**
 	* Get uptime in human readable String format.
 	* @param[out] Uptime.
 	*/
@@ -303,7 +297,11 @@ protected:
 	String printDigits(int digits);
 
 #ifdef ARDUINO_ARCH_AVR
-private:
+
+	int _timeZone = 0;
+	char* _ntpServerName;
+
+public:
 	/**
 	* Decode NTP response contained in buffer.
 	* @param[in] Pointer to message buffer.
@@ -312,11 +310,18 @@ private:
 	time_t decodeNtpMessage(char *messageBuffer);
 
 	/**
+	* Set last successful synchronization time.
+	* @param[out] Last sync time.
+	*/
+	void setLastNTPSync(time_t moment);
+
+private:
+	/**
 	* Sends NTP request packet to given IP address.
 	* @param[in] NTP server's IP address.
 	* @param[out] True if everything went ok.
 	*/
-	bool sendNTPpacket(IPAddress &address);
+	//bool sendNTPpacket(IPAddress &address);
 #endif
 };
 

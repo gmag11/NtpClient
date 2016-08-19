@@ -7,7 +7,7 @@
 
 #ifdef ARDUINO_ARCH_AVR
 
-#include <AvrNTPClient.h>
+#include "NTPClientLib.h"
 
 #define DBG_PORT Serial
 
@@ -20,7 +20,7 @@
 #endif
 
 
-AvrNTPClient NTP;
+NTPClient NTP;
 
 #if NETWORK_TYPE == NETWORK_W5100
 // send an NTP request to the time server at the given address
@@ -110,10 +110,10 @@ time_t getTime() {
 
 #endif //NETWORK_TYPE == W5100
 
-AvrNTPClient::AvrNTPClient() {
+NTPClient::NTPClient() {
 }
 
-boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false) {
+boolean NTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false) {
 	if (!setNtpServerName(ntpServerName)) {
 		return false;
 	}
@@ -134,14 +134,14 @@ boolean AvrNTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeO
 	return true;
 }
 
-boolean AvrNTPClient::stop() {
+boolean NTPClient::stop() {
 	setSyncProvider(NULL);
 	DEBUGLOGCR(F("Time sync disabled"));
 
 	return true;
 }
 
-time_t AvrNTPClient::decodeNtpMessage(char *messageBuffer) {
+time_t NTPClient::decodeNtpMessage(char *messageBuffer) {
 	unsigned long secsSince1900;
 	// convert four bytes starting at location 40 to a long integer
 	secsSince1900 = (unsigned long)messageBuffer[40] << 24;
@@ -167,7 +167,7 @@ time_t AvrNTPClient::decodeNtpMessage(char *messageBuffer) {
 	return timeTemp;
 }
 
-String AvrNTPClient::getTimeStr(time_t moment) {
+String NTPClient::getTimeStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += printDigits(hour(moment));
@@ -181,11 +181,11 @@ String AvrNTPClient::getTimeStr(time_t moment) {
 	else return F("Time not set");
 }
 
-String AvrNTPClient::getTimeStr() {
+String NTPClient::getTimeStr() {
 	return getTimeStr(now());
 }
 
-String AvrNTPClient::getDateStr(time_t moment) {
+String NTPClient::getDateStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		
@@ -200,11 +200,11 @@ String AvrNTPClient::getDateStr(time_t moment) {
 	else return F("Date not set");
 }
 
-String AvrNTPClient::getDateStr() {
+String NTPClient::getDateStr() {
 	return getDateStr(now());
 }
 
-String AvrNTPClient::getTimeDateString(time_t moment) {
+String NTPClient::getTimeDateString(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += getTimeStr(moment);
@@ -217,11 +217,11 @@ String AvrNTPClient::getTimeDateString(time_t moment) {
 	}
 }
 
-String AvrNTPClient::getTimeDateString() {
+String NTPClient::getTimeDateString() {
 	return getTimeDateString(now());
 }
 
-String AvrNTPClient::printDigits(int digits) {
+String NTPClient::printDigits(int digits) {
 	// utility for digital clock display: prints preceding colon and leading 0
 	String digStr = "";
 
@@ -232,32 +232,32 @@ String AvrNTPClient::printDigits(int digits) {
 	return digStr;
 }
 
-int AvrNTPClient::getInterval()
+int NTPClient::getInterval()
 {
 	return _longInterval;
 }
 
-int AvrNTPClient::getShortInterval()
+int NTPClient::getShortInterval()
 {
 	return _shortInterval;
 }
 
-boolean AvrNTPClient::getDayLight()
+boolean NTPClient::getDayLight()
 {
 	return this->_daylight;
 }
 
-int AvrNTPClient::getTimeZone()
+int NTPClient::getTimeZone()
 {
 	return _timeZone;
 }
 
-String AvrNTPClient::getNtpServerName()
+String NTPClient::getNtpServerName()
 {
 	return String(_ntpServerName);
 }
 
-boolean AvrNTPClient::setNtpServerName(String ntpServerName) {
+boolean NTPClient::setNtpServerName(String ntpServerName) {
 	char * name = (char *)malloc((ntpServerName.length() + 1) * sizeof(char));
 	ntpServerName.toCharArray(name, ntpServerName.length() + 1);
 	DEBUGLOG(F("NTP server set to "));
@@ -267,7 +267,7 @@ boolean AvrNTPClient::setNtpServerName(String ntpServerName) {
 	return true;
 }
 
-boolean AvrNTPClient::setInterval(int interval)
+boolean NTPClient::setInterval(int interval)
 {
 	if (interval >= 10) {
 		if (_longInterval != interval) {
@@ -283,7 +283,7 @@ boolean AvrNTPClient::setInterval(int interval)
 		return false;
 }
 
-boolean AvrNTPClient::setInterval(int shortInterval, int longInterval) {
+boolean NTPClient::setInterval(int shortInterval, int longInterval) {
 	if (shortInterval >= 10 && _longInterval >= 10) {
 		_shortInterval = shortInterval;
 		_longInterval = longInterval;
@@ -302,7 +302,7 @@ boolean AvrNTPClient::setInterval(int shortInterval, int longInterval) {
 }
 
 
-boolean AvrNTPClient::setTimeZone(int timeZone)
+boolean NTPClient::setTimeZone(int timeZone)
 {
 	if (timeZone >= -11 || timeZone <= 13) {
 		_timeZone = timeZone;
@@ -314,7 +314,7 @@ boolean AvrNTPClient::setTimeZone(int timeZone)
 		return false;
 }
 
-void AvrNTPClient::setDayLight(boolean daylight)
+void NTPClient::setDayLight(boolean daylight)
 {
 	_daylight = daylight;
 	DEBUGLOG(F("--Set daylight saving to "));
@@ -324,7 +324,7 @@ void AvrNTPClient::setDayLight(boolean daylight)
 //
 // Summertime calculates the daylight saving for a given date.
 //
-boolean AvrNTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
+boolean NTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
 {
 	if (month<3 || month>10) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
@@ -335,21 +335,21 @@ boolean AvrNTPClient::summertime(int year, byte month, byte day, byte hour, byte
 		return false;
 }
 
-time_t AvrNTPClient::getLastNTPSync() {
+time_t NTPClient::getLastNTPSync() {
 	return _lastSyncd;
 }
 
-void AvrNTPClient::setLastNTPSync(time_t moment) {
+void NTPClient::setLastNTPSync(time_t moment) {
 	_lastSyncd = moment;
 }
 
-time_t AvrNTPClient::getUptime()
+time_t NTPClient::getUptime()
 {
 	_uptime = _uptime + (millis() - _uptime); // Add time since last getUptime call
 	return _uptime / 1000;
 }
 
-String AvrNTPClient::getUptimeString() {
+String NTPClient::getUptimeString() {
 	unsigned int days;
 	unsigned char hours;
 	unsigned char minutes;
@@ -373,7 +373,7 @@ String AvrNTPClient::getUptimeString() {
 	return uptimeStr;
 }
 
-time_t AvrNTPClient::getFirstSync()
+time_t NTPClient::getFirstSync()
 {
 	if (!_firstSync) {
 		if (timeStatus() == timeSet) {
@@ -382,6 +382,10 @@ time_t AvrNTPClient::getFirstSync()
 	}
 
 	return _firstSync;
+}
+
+void NTPClient::onNTPSyncEvent(onSyncEvent_t handler) {
+	onSyncEvent = handler;
 }
 
 #endif // ARDUINO_ARCH_AVR
