@@ -61,7 +61,7 @@ void setup()
 		}
 	});
 	NTP.begin("es.pool.ntp.org", 1, true);
-	NTP.setInterval(13,63);
+	NTP.setInterval(63);
 }
 
 void loop()
@@ -69,7 +69,7 @@ void loop()
 	static int i = 0;
 	static int last = 0;
 
-	if ((millis() - last) > 5000) {
+	if ((millis() - last) > 5100) {
 		//Serial.println(millis() - last);
 		last = millis();
 		Serial.print(i); Serial.print(" ");

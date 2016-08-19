@@ -155,7 +155,7 @@ bool NTPClient::setInterval(int interval)
 }
 
 bool NTPClient::setInterval(int shortInterval, int longInterval) {
-	if (shortInterval >= 10 && longInterval >= 10) {
+	if (shortInterval >= 5 && longInterval >= 10) {
 		_shortInterval = shortInterval;
 		_longInterval = longInterval;
 		if (timeStatus() != timeSet) {
@@ -308,7 +308,7 @@ String NTPClient::getUptimeString() {
 
 	String uptimeStr = ""; 
 	char buffer[20];
-	sprintf(buffer, "%4d days %02d:%02d:%02d", days, hours, minutes, seconds);
+	sprintf(buffer, "%d days %02d:%02d:%02d", days, hours, minutes, seconds);
 	uptimeStr += buffer;
 
 	return uptimeStr;
