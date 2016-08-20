@@ -11,7 +11,7 @@ This is a NTP library to be able to get time from NTP server with my ESP8266s. I
 
 Using the library is fairly easy. A NTP object is created inside library. You may use default values by using `NTP.begin()` without parameters. After that synchronization is done regularly without user intervention. Some parameters can be adjusted: server, sync frequency, time offset.
 
-You don't need anything more. Time update is managed inside library so, after `begin()` no more calls to library are needed.
+You don't need anything more. Time update is managed inside library so, after `NTP.begin()` no more calls to library are needed.
 
 Update frequency is higher (every 15 seconds as default) until 1st successful sync is achieved. Since then, your own (or default 1800 seconds) adjusted period applies. There is a way to adjust both period if needed.
 
@@ -24,7 +24,6 @@ This library includes an uptime log too. It counts number of seconds since scket
 ```Arduino
 #include <TimeLib.h>
 #include <NtpClientLib.h>
-
 #include <SPI.h>
 #include <EthernetUdp.h>
 #include <Ethernet.h>
@@ -34,7 +33,7 @@ This library includes an uptime log too. It counts number of seconds since scket
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {
-	0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0xCC
+	0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
 };
 
 EthernetClient client;
@@ -42,16 +41,27 @@ EthernetClient client;
 void setup()
 {
 	Serial.begin(115200);
-
 	if (Ethernet.begin(mac) == 0) {
 		Serial.println("Failed to configure Ethernet using DHCP");
 		// no point in carrying on, so do nothing forevermore:
 		for (;;)
 			;
 	}
-
-	NTP.begin("pool.ntp.org", 1, true); // <-- Only this line is needed
-    NTP.setInterval(3600); // OPTIONAL. Default period is 1800 seconds.
+	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
+		if (error) {
+			Serial.print("Time Sync error: ");
+			if (error == noResponse)
+				Serial.println("NTP server not reachable");
+			else if (error == invalidAddress)
+				Serial.println("Invalid NTP server address");
+		}
+		else {
+			Serial.print("Got NTP time: ");
+			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
+		}
+	});
+	NTP.begin("es.pool.ntp.org", 1, true);
+	NTP.setInterval(63);
 }
 
 void loop()
@@ -59,7 +69,7 @@ void loop()
 	static int i = 0;
 	static int last = 0;
 
-	if ((millis() - last) > 5000) {
+	if ((millis() - last) > 5100) {
 		//Serial.println(millis() - last);
 		last = millis();
 		Serial.print(i); Serial.print(" ");
@@ -70,6 +80,7 @@ void loop()
 
 		i++;
 	}
+	delay(0);
 	Ethernet.maintain(); // Check DHCP for renewal
 }
 ```
@@ -89,9 +100,21 @@ void setup()
 	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-	
-    NTP.begin("es.pool.ntp.org", 1, true); // <-- Only this line is needed
-	NTP.setInterval(3600); // OPTIONAL. Default period is 1800 seconds.
+	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
+		if (error) {
+			Serial.print("Time Sync error: ");
+			if (error == noResponse)
+				Serial.println("NTP server not reachable");
+			else if (error == invalidAddress)
+				Serial.println("Invalid NTP server address");
+		}
+		else {
+			Serial.print("Got NTP time: ");
+			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
+		}
+	});
+	NTP.begin("pool.ntp.org", 1, true);
+	NTP.setInterval(1800);
 }
 
 void loop()
@@ -99,8 +122,7 @@ void loop()
 	static int i = 0;
 	static int last = 0;
 
-	if ((millis() - last) > 5000) {
-		//Serial.println(millis() - last);
+	if ((millis() - last) > 5100) {
 		last = millis();
 		Serial.print(i); Serial.print(" ");
 		Serial.print(NTP.getTimeDateString()); Serial.print(". ");
@@ -112,6 +134,7 @@ void loop()
 
 		i++;
 	}
+	delay(0);
 }
 ```
 

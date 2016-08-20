@@ -113,7 +113,7 @@ time_t getTime() {
 NTPClient::NTPClient() {
 }
 
-boolean NTPClient::begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, boolean daylight = false) {
+bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight) {
 	if (!setNtpServerName(ntpServerName)) {
 		return false;
 	}
