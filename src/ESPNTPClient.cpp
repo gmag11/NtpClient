@@ -4,7 +4,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 
-#include <ESPNTPClient.h>
+#include "NTPClientLib.h"
 
 #define DBG_PORT Serial
 
@@ -15,13 +15,13 @@
 #endif
 
 
-ESPNTPClient NTP;
+NTPClient NTP;
 
-ESPNTPClient::ESPNTPClient()
+NTPClient::NTPClient()
 {
 }
 
-bool ESPNTPClient::setNtpServerName(int idx, String ntpServerName)
+bool NTPClient::setNtpServerName(String ntpServerName, int idx)
 {
 	char * buffer = (char *)malloc((ntpServerName.length()+1) * sizeof(char));
 	if ((idx >= 0) && (idx <= 2)) {
@@ -35,7 +35,7 @@ bool ESPNTPClient::setNtpServerName(int idx, String ntpServerName)
 	return false;
 }
 
-String ESPNTPClient::getNtpServerName(int idx)
+String NTPClient::getNtpServerName(int idx)
 {
 	if ((idx >= 0) && (idx <= 2)) {
 		return String(sntp_getservername(idx));
@@ -43,7 +43,7 @@ String ESPNTPClient::getNtpServerName(int idx)
 	return "";
 }
 
-bool ESPNTPClient::setTimeZone(int timeZone)
+bool NTPClient::setTimeZone(int timeZone)
 {
 	//if ((timeZone >= -11) && (timeZone <= 13)) {
 	sntp_stop();
@@ -56,16 +56,16 @@ bool ESPNTPClient::setTimeZone(int timeZone)
 	//return false;
 }
 
-int ESPNTPClient::getTimeZone()
+int NTPClient::getTimeZone()
 {
 	return sntp_get_timezone();
 }
 
-void ESPNTPClient::setLastNTPSync(time_t moment) {
+/*void NTPClient::setLastNTPSync(time_t moment) {
 	_lastSyncd = moment;
-}
+}*/
 
-time_t getTime()
+time_t NTPClient::getTime()
 {
 	DEBUGLOG("-- NTP Server hostname: %s\r\n", sntp_getservername(0));
 	DEBUGLOG("-- Transmit NTP Request\r\n");
@@ -74,8 +74,8 @@ time_t getTime()
 	if (secsSince1970) {
 		setSyncInterval(NTP.getInterval()); // Normal refresh frequency
 		DEBUGLOG("Sync frequency set low\r\n");
-		if (NTP.getDayLight()) {
-			if (NTP.summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), NTP.getTimeZone())) {
+		if (getDayLight()) {
+			if (summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), getTimeZone())) {
 				secsSince1970 += SECS_PER_HOUR;
 				DEBUGLOG("Summer Time\r\n");
 			}
@@ -88,21 +88,29 @@ time_t getTime()
 			DEBUGLOG("No daylight\r\n");
 
 		}
-		NTP.getFirstSync();
-		NTP.setLastNTPSync(secsSince1970);
-		DEBUGLOG("Succeccful NTP sync at %s\r\n", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
+		getFirstSync();
+		_lastSyncd = secsSince1970;
+		if (!_firstSync) {
+			_firstSync = secsSince1970;
+			DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
+		}
+		if (onSyncEvent != NULL)
+			onSyncEvent(timeSyncd);     // call the handler
+		DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
 	}
 	else {
 		DEBUGLOG("-- NTP error :-(\r\n");
-		setSyncInterval(NTP.getShortInterval()); // Fast refresh frequency, until successful sync
+		if (onSyncEvent != NULL)
+			onSyncEvent(noResponse);     // call the handler
+		setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
 	}
 
 	return secsSince1970;
 }
 
-boolean ESPNTPClient::begin(String ntpServerName, int timeOffset, boolean daylight)
+bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
 {
-	if (!setNtpServerName(0, ntpServerName)) {
+	if (!setNtpServerName(ntpServerName)) {
 		return false;
 	}
 	if (!setTimeZone(timeOffset)) {
@@ -118,25 +126,25 @@ boolean ESPNTPClient::begin(String ntpServerName, int timeOffset, boolean daylig
 	DEBUGLOG("Time sync started\r\n");
 
 	setSyncInterval(getShortInterval());
-	setSyncProvider(getTime);
+	setSyncProvider(std::bind(&NTPClient::getTime,this));
 
 	return true;
 }
 
-boolean ESPNTPClient::stop() {
+bool NTPClient::stop() {
 	setSyncProvider(NULL);
 	DEBUGLOG("Time sync disabled\r\n");
 	sntp_stop();
 	return true;
 }
 
-boolean ESPNTPClient::setInterval(int interval)
+bool NTPClient::setInterval(int interval)
 {
 	if (interval >= 10) {
 		if (_longInterval != interval) {
 			_longInterval = interval;
-			DEBUGLOG("Long sync interval set to %d", interval);
-			if (timeStatus() != timeSet)
+			DEBUGLOG("Long sync interval set to %d\r\n", interval);
+			if (timeStatus() == timeSet)
 				setSyncInterval(interval);
 		}
 		return true;
@@ -146,8 +154,8 @@ boolean ESPNTPClient::setInterval(int interval)
 	return false;
 }
 
-boolean ESPNTPClient::setInterval(int shortInterval, int longInterval) {
-	if (shortInterval >= 10 && longInterval >= 10) {
+bool NTPClient::setInterval(int shortInterval, int longInterval) {
+	if (shortInterval >= 5 && longInterval >= 10) {
 		_shortInterval = shortInterval;
 		_longInterval = longInterval;
 		if (timeStatus() != timeSet) {
@@ -164,28 +172,28 @@ boolean ESPNTPClient::setInterval(int shortInterval, int longInterval) {
 	return false;
 }
 
-int ESPNTPClient::getInterval()
+int NTPClient::getInterval()
 {
 	return _longInterval;
 }
 
-int ESPNTPClient::getShortInterval()
+int NTPClient::getShortInterval()
 {
 	return _shortInterval;
 }
 
-void ESPNTPClient::setDayLight(boolean daylight)
+void NTPClient::setDayLight(bool daylight)
 {
 	_daylight = daylight;
-	DEBUGLOG("--Set daylight %s", daylight? "ON" : "OFF");
+	DEBUGLOG("--Set daylight %s\r\n", daylight? "ON" : "OFF");
 }
 
-boolean ESPNTPClient::getDayLight()
+bool NTPClient::getDayLight()
 {
 	return _daylight;
 }
 
-String ESPNTPClient::getTimeStr(time_t moment) {
+String NTPClient::getTimeStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += printDigits(hour(moment));
@@ -199,11 +207,11 @@ String ESPNTPClient::getTimeStr(time_t moment) {
 	else return "Time not set";
 }
 
-String ESPNTPClient::getTimeStr() {
+String NTPClient::getTimeStr() {
 	return getTimeStr(now());
 }
 
-String ESPNTPClient::getDateStr(time_t moment) {
+String NTPClient::getDateStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 
@@ -218,11 +226,11 @@ String ESPNTPClient::getDateStr(time_t moment) {
 	else return "Date not set";
 }
 
-String ESPNTPClient::getDateStr() {
+String NTPClient::getDateStr() {
 	return getDateStr(now());
 }
 
-String ESPNTPClient::getTimeDateString(time_t moment) {
+String NTPClient::getTimeDateString(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += getTimeStr(moment);
@@ -236,14 +244,14 @@ String ESPNTPClient::getTimeDateString(time_t moment) {
 	}
 }
 
-String ESPNTPClient::getTimeDateString() {
+String NTPClient::getTimeDateString() {
 	if (timeStatus() == timeSet) {
 		return getTimeDateString(now());
 	}
 	return "Time not set";
 }
 
-String ESPNTPClient::printDigits(int digits) {
+String NTPClient::printDigits(int digits) {
 	// utility for digital clock display: prints preceding colon and leading 0
 	String digStr = "";
 
@@ -254,7 +262,7 @@ String ESPNTPClient::printDigits(int digits) {
 	return digStr;
 }
 
-boolean ESPNTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
+bool NTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHours)
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
 {
 	if ((month<3) || (month>10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
@@ -265,13 +273,13 @@ boolean ESPNTPClient::summertime(int year, byte month, byte day, byte hour, byte
 		return false;
 }
 
-time_t ESPNTPClient::getUptime()
+time_t NTPClient::getUptime()
 {
 	_uptime = _uptime + (millis() - _uptime);
 	return _uptime / 1000;
 }
 
-time_t ESPNTPClient::getFirstSync()
+time_t NTPClient::getFirstSync()
 {
 	if (!_firstSync) {
 		if (timeStatus() == timeSet) {
@@ -282,7 +290,7 @@ time_t ESPNTPClient::getFirstSync()
 	return _firstSync;
 }
 
-String ESPNTPClient::getUptimeString() {
+String NTPClient::getUptimeString() {
 	uint days;
 	uint8 hours;
 	uint8 minutes;
@@ -300,14 +308,18 @@ String ESPNTPClient::getUptimeString() {
 
 	String uptimeStr = ""; 
 	char buffer[20];
-	sprintf(buffer, "%4d days %02d:%02d:%02d", days, hours, minutes, seconds);
+	sprintf(buffer, "%d days %02d:%02d:%02d", days, hours, minutes, seconds);
 	uptimeStr += buffer;
 
 	return uptimeStr;
 }
 
-time_t ESPNTPClient::getLastNTPSync() {
+time_t NTPClient::getLastNTPSync() {
 	return _lastSyncd;
+}
+
+void NTPClient::onNTPSyncEvent(onSyncEvent_t handler) {
+	onSyncEvent = handler;
 }
 
 #endif // ARDUINO_ARCH_ESP8266
