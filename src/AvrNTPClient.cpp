@@ -5,9 +5,9 @@
  Editor:	http://www.visualmicro.com
 */
 
-#ifdef ARDUINO_ARCH_AVR
-
 #include "NTPClientLib.h"
+
+#ifdef ARDUINO_ARCH_AVR
 
 #define DBG_PORT Serial
 
@@ -107,8 +107,87 @@ time_t getTime() {
 		return 0; // return 0 if unable to get the time 
 	}
 }
+#elif NETWORK_TYPE == NETWORK_WIFI101
+// send an NTP request to the time server at the given address
+boolean sendNTPpacket(const char* address, WiFiUDP udp) {
+	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
 
-#endif //NETWORK_TYPE == W5100
+										   // set all bytes in the buffer to 0
+	memset(ntpPacketBuffer, 0, NTP_PACKET_SIZE);
+	// Initialize values needed to form NTP request
+	// (see URL above for details on the packets)
+	ntpPacketBuffer[0] = 0b11100011;   // LI, Version, Mode
+	ntpPacketBuffer[1] = 0;     // Stratum, or type of clock
+	ntpPacketBuffer[2] = 6;     // Polling Interval
+	ntpPacketBuffer[3] = 0xEC;  // Peer Clock Precision
+								// 8 bytes of zero for Root Delay & Root Dispersion
+	ntpPacketBuffer[12] = 49;
+	ntpPacketBuffer[13] = 0x4E;
+	ntpPacketBuffer[14] = 49;
+	ntpPacketBuffer[15] = 52;
+	// all NTP fields have been given values, now
+	// you can send a packet requesting a timestamp: 
+	udp.beginPacket(address, 123); //NTP requests are to port 123
+	udp.write(ntpPacketBuffer, NTP_PACKET_SIZE);
+	udp.endPacket();
+	return true;
+}
+
+/**
+* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
+* @param[out] Time in UNIX time format. Seconds since 1st january 1970.
+*/
+time_t getTime() {
+	DNSClient dns;
+	WiFiUDP udp;
+	IPAddress timeServerIP; //NTP server IP address
+	char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
+
+
+	DEBUGLOGCR(F("Starting UDP"));
+	udp.begin(DEFAULT_NTP_PORT);
+	DEBUGLOG(F("Remote port: "));
+	DEBUGLOGCR(udp.remotePort());
+	while (udp.parsePacket() > 0); // discard any previously received packets
+	/*dns.begin(WiFi.dnsServerIP());
+	uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
+	DEBUGLOG(F("NTP Server hostname: "));
+	DEBUGLOGCR(NTP.getNtpServerName());
+	DEBUGLOG(F("NTP Server IP address: "));
+	DEBUGLOGCR(timeServerIP);
+	DEBUGLOG(F("Result code: "));
+	DEBUGLOG(dnsResult);
+	DEBUGLOG(" ");
+	DEBUGLOGCR(F("-- IP Connected. Waiting for sync"));
+	DEBUGLOGCR(F("-- Transmit NTP Request"));*/
+
+	//if (dnsResult == 1) { //If DNS lookup resulted ok
+	sendNTPpacket(NTP.getNtpServerName().c_str(), udp);
+	uint32_t beginWait = millis();
+	while (millis() - beginWait < 1500) {
+		int size = udp.parsePacket();
+		if (size >= NTP_PACKET_SIZE) {
+			DEBUGLOGCR(F("-- Receive NTP Response"));
+			udp.read(ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+			time_t timeValue = NTP.decodeNtpMessage(ntpPacketBuffer);
+			setSyncInterval(NTP.getLongInterval());
+			NTP.getFirstSync(); // Set firstSync value if not set before
+			DEBUGLOGCR(F("Sync frequency set low"));
+			udp.stop();
+			NTP.setLastNTPSync(timeValue);
+			DEBUGLOG(F("Succeccful NTP sync at "));
+			DEBUGLOGCR(NTP.getTimeDateString(NTP.getLastNTPSync()));
+
+			return timeValue;
+		}
+	}
+	DEBUGLOGCR(F("-- No NTP Response :-("));
+	udp.stop();
+	setSyncInterval(NTP.getShortInterval()); // Retry connection more often
+	return 0; // return 0 if unable to get the time 
+}
+
+#endif //NETWORK_TYPE
 
 NTPClient::NTPClient() {
 }

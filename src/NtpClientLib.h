@@ -31,10 +31,10 @@ using namespace placeholders;
 #include "WProgram.h"
 #endif
 
-#define NETWORK_W5100           (1)
-#define NETWORK_ENC28J60        (2)
-#define NETWORK_WIFI101			(3)
-#define NETWORK_ESP8266			(100)
+#define NETWORK_W5100           (1) // Arduino Ethernet Shield
+#define NETWORK_ENC28J60        (2) // Alternate Ethernet Shield
+#define NETWORK_WIFI101			(3) // WiFi Shield 101 or MKR1000
+#define NETWORK_ESP8266			(100) // ESP8266 boards, not for Arduino using AT firmware
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -47,12 +47,21 @@ using namespace placeholders;
 #define NETWORK_TYPE NETWORK_ESP8266
 
 #elif defined ARDUINO_ARCH_AVR
-#define NETWORK_TYPE NETWORK_W5100
+#define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
+#if NETWORK_TYPE == NETWORK_W5100
 #include <SPI.h>
 #include <EthernetUdp.h>
 #include <Ethernet.h>
 #include <Dns.h>
 #include <Dhcp.h>
+#elif NETWORK_TYPE == NETWORK_WIFI101
+#include <SPI.h>
+#include <WiFiClient.h>
+#include <WiFiUdp.h>
+#include <WiFi101.h>
+#include <Dns.h>
+#include <Dhcp.h>
+#endif // NETWORK_TYPE
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
