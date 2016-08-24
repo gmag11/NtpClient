@@ -286,6 +286,7 @@ protected:
 	unsigned long _uptime = 0; // Time since boot
 	onSyncEvent_t onSyncEvent; // Event handler callback
 
+	static time_t s_getTime();
 
 	/**
 	* Calculates the daylight saving for a given date.

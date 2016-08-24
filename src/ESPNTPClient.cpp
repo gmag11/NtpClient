@@ -66,6 +66,10 @@ int NTPClient::getTimeZone()
 	_lastSyncd = moment;
 }*/
 
+time_t NTPClient::s_getTime() {
+	NTP.getTime();
+}
+
 time_t NTPClient::getTime()
 {
 	DEBUGLOG("-- NTP Server hostname: %s\r\n", sntp_getservername(0));
@@ -133,7 +137,7 @@ bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
 	DEBUGLOG("Time sync started\r\n");
 
 	setSyncInterval(getShortInterval());
-	setSyncProvider(std::bind(&NTPClient::getTime,this));
+	setSyncProvider(s_getTime);
 
 	return true;
 }
