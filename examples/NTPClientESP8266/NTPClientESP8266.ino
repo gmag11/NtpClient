@@ -20,6 +20,7 @@ void setup()
 	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+
 	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
 		if (error) {
 			Serial.print("Time Sync error: ");
@@ -33,8 +34,12 @@ void setup()
 			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
 		}
 	});
-	NTP.begin("es.pool.ntp.org", 1, true);
-	NTP.setInterval(63);
+
+	WiFi.onStationModeGotIP([](WiFiEventStationModeGotIP ipInfo) { // As soon WiFi is connected, start NTP Client
+		NTP.begin("pool.ntp.org", 1, true);
+		NTP.setInterval(63);
+	});
+
 }
 
 void loop()
