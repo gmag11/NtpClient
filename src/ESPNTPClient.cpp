@@ -5,6 +5,7 @@
 #ifdef ARDUINO_ARCH_ESP8266
 
 #include "NTPClientLib.h"
+#include <ESP8266WiFi.h>
 
 #define DBG_PORT Serial
 
@@ -68,44 +69,50 @@ int NTPClient::getTimeZone()
 time_t NTPClient::getTime()
 {
 	DEBUGLOG("-- NTP Server hostname: %s\r\n", sntp_getservername(0));
-	DEBUGLOG("-- Transmit NTP Request\r\n");
-	uint32 secsSince1970 = sntp_get_current_timestamp();
-	NTP.getUptime();
-	if (secsSince1970) {
-		setSyncInterval(NTP.getInterval()); // Normal refresh frequency
-		DEBUGLOG("Sync frequency set low\r\n");
-		if (getDayLight()) {
-			if (summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), getTimeZone())) {
-				secsSince1970 += SECS_PER_HOUR;
-				DEBUGLOG("Summer Time\r\n");
+	if (WiFi.isConnected())	{
+		DEBUGLOG("-- Transmit NTP Request\r\n");
+		uint32 secsSince1970 = sntp_get_current_timestamp();
+		NTP.getUptime();
+		if (secsSince1970) {
+			setSyncInterval(NTP.getInterval()); // Normal refresh frequency
+			DEBUGLOG("Sync frequency set low\r\n");
+			if (getDayLight()) {
+				if (summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), getTimeZone())) {
+					secsSince1970 += SECS_PER_HOUR;
+					DEBUGLOG("Summer Time\r\n");
+				}
+				else {
+					DEBUGLOG("Winter Time\r\n");
+				}
+
 			}
 			else {
-				DEBUGLOG("Winter Time\r\n");
+				DEBUGLOG("No daylight\r\n");
+
 			}
-	
+			getFirstSync();
+			_lastSyncd = secsSince1970;
+			if (!_firstSync) {
+				_firstSync = secsSince1970;
+				DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
+			}
+			if (onSyncEvent != NULL)
+				onSyncEvent(timeSyncd);     // call the handler
+			DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
 		}
 		else {
-			DEBUGLOG("No daylight\r\n");
+			DEBUGLOG("-- NTP error :-(\r\n");
+			if (onSyncEvent != NULL)
+				onSyncEvent(noResponse);     // call the handler
+			setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
+		}
 
-		}
-		getFirstSync();
-		_lastSyncd = secsSince1970;
-		if (!_firstSync) {
-			_firstSync = secsSince1970;
-			DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
-		}
-		if (onSyncEvent != NULL)
-			onSyncEvent(timeSyncd);     // call the handler
-		DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
+		return secsSince1970;
 	}
 	else {
-		DEBUGLOG("-- NTP error :-(\r\n");
-		if (onSyncEvent != NULL)
-			onSyncEvent(noResponse);     // call the handler
-		setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
+		DEBUGLOG("-- NTP Error. WiFi not connected.\r\n");
+		return 0;
 	}
-
-	return secsSince1970;
 }
 
 bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
