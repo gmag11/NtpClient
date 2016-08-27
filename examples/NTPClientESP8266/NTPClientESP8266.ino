@@ -21,12 +21,12 @@ void setup()
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
 
-	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
-		if (error) {
+	NTP.onNTPSyncEvent([](NTPSyncEvent_t ntpEvent) {
+		if (ntpEvent) {
 			Serial.print("Time Sync error: ");
-			if (error == noResponse)
+			if (ntpEvent == noResponse)
 				Serial.println("NTP server not reachable");
-			else if (error == invalidAddress)
+			else if (ntpEvent == invalidAddress)
 				Serial.println("Invalid NTP server address");
 		}
 		else {
