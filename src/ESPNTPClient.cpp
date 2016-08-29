@@ -284,6 +284,13 @@ bool NTPClient::summertime(int year, byte month, byte day, byte hour, byte tzHou
 		return false;
 }
 
+time_t NTPClient::getLastBootTime() {
+	if (timeStatus() == timeSet) {
+		return (now() - getUptime());
+	}
+	return 0;
+}
+
 time_t NTPClient::getUptime()
 {
 	_uptime = _uptime + (millis() - _uptime);

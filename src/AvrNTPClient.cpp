@@ -422,6 +422,13 @@ void NTPClient::setLastNTPSync(time_t moment) {
 	_lastSyncd = moment;
 }
 
+time_t NTPClient::getLastBootTime() {
+	if (timeStatus() == timeSet) {
+		return (now() - getUptime());
+	}
+	return 0;
+}
+
 time_t NTPClient::getUptime()
 {
 	_uptime = _uptime + (millis() - _uptime); // Add time since last getUptime call

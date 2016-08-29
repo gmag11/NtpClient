@@ -264,6 +264,12 @@ public:
 	time_t getUptime();
 
 	/**
+	* Get first boot time in UNIX format, time when MCU was last rebooted.
+	* @param[out] Uptime. 0 equals never.
+	*/
+	time_t getLastBootTime();
+
+	/**
 	* Get first successful synchronization time after boot.
 	* @param[out] First sync time.
 	*/
