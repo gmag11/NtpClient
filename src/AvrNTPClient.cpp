@@ -7,7 +7,7 @@
 
 #include "NTPClientLib.h"
 
-#ifdef ARDUINO_ARCH_AVR
+#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD
 
 #define DBG_PORT Serial
 
