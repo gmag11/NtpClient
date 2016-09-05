@@ -46,7 +46,7 @@ using namespace placeholders;
 #ifdef ARDUINO_ARCH_ESP8266
 #define NETWORK_TYPE NETWORK_ESP8266
 
-#elif defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD
+#elif defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
 #define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
 #if NETWORK_TYPE == NETWORK_W5100
 #include <SPI.h>
@@ -121,7 +121,7 @@ public:
 	*/
 	time_t getTime();
 #endif
-#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD
+#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
 	/**
 	* Sets NTP server name.
 	* @param[in] New NTP server name.
@@ -312,7 +312,7 @@ protected:
 	*/
 	String printDigits(int digits);
 
-#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD
+#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
 
 	int _timeZone = 0;
 	char* _ntpServerName;
