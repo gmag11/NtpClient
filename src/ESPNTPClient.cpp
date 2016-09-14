@@ -4,7 +4,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 
-#include "NTPClientLib.h"
+#include "NtpClientLib.h"
 #include <ESP8266WiFi.h>
 
 #define DBG_PORT Serial
