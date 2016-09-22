@@ -309,6 +309,15 @@ public:
 	*/
 	void onNTPSyncEvent(onSyncEvent_t handler);
 
+	boolean isSummerTime() { 
+		if (_daylight)
+			return isSummerTimePeriod(now());
+		else
+			return false;
+	}
+
+	boolean isSummerTimePeriod(time_t moment);
+
 protected:
 
 	bool _daylight; //Does this time zone have daylight saving?

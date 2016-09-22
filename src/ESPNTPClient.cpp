@@ -367,4 +367,8 @@ void NTPClient::onNTPSyncEvent(onSyncEvent_t handler) {
 	onSyncEvent = handler;
 }
 
+boolean NTPClient::isSummerTimePeriod(time_t moment) {
+	return summertime(year(), month(), day(), hour(), getTimeZone());
+}
+
 #endif // ARDUINO_ARCH_ESP8266

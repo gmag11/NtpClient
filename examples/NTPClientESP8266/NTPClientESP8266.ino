@@ -62,8 +62,8 @@ void setup()
 			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
 		}
 	});
-
 	WiFi.onStationModeGotIP([](WiFiEventStationModeGotIP ipInfo) { // As soon WiFi is connected, start NTP Client
+		Serial.printf("Got IP: %s\r\n", WiFi.localIP().toString().c_str());
 		NTP.begin("pool.ntp.org", 1, true);
 		NTP.setInterval(63);
 	});
@@ -79,7 +79,8 @@ void loop()
 		//Serial.println(millis() - last);
 		last = millis();
 		Serial.print(i); Serial.print(" ");
-		Serial.print(NTP.getTimeDateString()); Serial.print(". ");
+		Serial.print(NTP.getTimeDateString()); Serial.print(" ");
+		Serial.print(NTP.isSummerTime() ? "Summer Time. " : "Winter Time. ");
 		Serial.print("WiFi is ");
 		Serial.print(WiFi.isConnected() ? "connected" : "not connected"); Serial.print(". ");
 		Serial.print("Uptime: ");
