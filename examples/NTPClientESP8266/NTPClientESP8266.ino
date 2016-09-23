@@ -42,6 +42,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
 #endif // !WIFI_CONFIG_H
+
 void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
 	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
 	NTP.begin("pool.ntp.org", 1, true);
@@ -55,9 +56,11 @@ void onSTADisconnected(WiFiEventStationModeDisconnected event_info) {
 	digitalWrite(2, HIGH);
 }
 
-
 void setup()
-{	Serial.begin(115200);
+{	
+	static WiFiEventHandler e1, e2;
+
+	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
 	pinMode(2, OUTPUT);
@@ -79,8 +82,8 @@ void setup()
 	WiFi.onEvent([](WiFiEvent_t e) {
 		Serial.printf("Event wifi -----> %d\n", e);
 	});
-	WiFi.onStationModeGotIP(onSTAGotIP);// As soon WiFi is connected, start NTP Client
-	WiFi.onStationModeDisconnected(onSTADisconnected);
+	e1 = WiFi.onStationModeGotIP(onSTAGotIP);// As soon WiFi is connected, start NTP Client
+	e2 = WiFi.onStationModeDisconnected(onSTADisconnected);
 
 }
 
