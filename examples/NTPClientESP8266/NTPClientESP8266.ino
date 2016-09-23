@@ -62,6 +62,9 @@ void setup()
 			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
 		}
 	});
+	WiFi.onEvent([](WiFiEvent_t e) {
+		Serial.printf("Event wifi -----> %d\n", e);
+	});
 	WiFi.onStationModeGotIP([](WiFiEventStationModeGotIP ipInfo) { // As soon WiFi is connected, start NTP Client
 		Serial.printf("Got IP: %s\r\n", WiFi.localIP().toString().c_str());
 		NTP.begin("pool.ntp.org", 1, true);
