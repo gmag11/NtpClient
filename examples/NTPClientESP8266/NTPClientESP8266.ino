@@ -42,12 +42,26 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
 #endif // !WIFI_CONFIG_H
+void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
+	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
+	NTP.begin("pool.ntp.org", 1, true);
+	NTP.setInterval(63);
+	digitalWrite(2, LOW);
+}
+
+void onSTADisconnected(WiFiEventStationModeDisconnected event_info) {
+	Serial.printf("Disconnected from SSID: %s\n", event_info.ssid.c_str());
+	Serial.printf("Reason: %d\n", event_info.reason);
+	digitalWrite(2, HIGH);
+}
+
 
 void setup()
-{
-	Serial.begin(115200);
+{	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+	pinMode(2, OUTPUT);
+	digitalWrite(2, HIGH);
 
 	NTP.onNTPSyncEvent([](NTPSyncEvent_t ntpEvent) {
 		if (ntpEvent) {
@@ -65,11 +79,8 @@ void setup()
 	WiFi.onEvent([](WiFiEvent_t e) {
 		Serial.printf("Event wifi -----> %d\n", e);
 	});
-	WiFi.onStationModeGotIP([](WiFiEventStationModeGotIP ipInfo) { // As soon WiFi is connected, start NTP Client
-		Serial.printf("Got IP: %s\r\n", WiFi.localIP().toString().c_str());
-		NTP.begin("pool.ntp.org", 1, true);
-		NTP.setInterval(63);
-	});
+	WiFi.onStationModeGotIP(onSTAGotIP);// As soon WiFi is connected, start NTP Client
+	WiFi.onStationModeDisconnected(onSTADisconnected);
 
 }
 
