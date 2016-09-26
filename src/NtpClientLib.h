@@ -309,6 +309,12 @@ public:
 	*/
 	void onNTPSyncEvent(onSyncEvent_t handler);
 
+	/**
+	* True if current time is inside DST period (aka. summer time). False otherwise of if NTP object has DST 
+	* calculation disabled
+	* @param[out] True = summertime enabled and time in summertime period
+	*			  False = sumertime disabled or time ouside summertime period
+	*/
 	boolean isSummerTime() { 
 		if (_daylight)
 			return isSummerTimePeriod(now());
@@ -316,6 +322,12 @@ public:
 			return false;
 	}
 
+	/**
+	* True if given time is inside DST period (aka. summer time). False otherwise.
+	* @param[in] time to make the calculation with
+	* @param[out] True = time in summertime period
+	*			  False = time ouside summertime period
+	*/
 	boolean isSummerTimePeriod(time_t moment);
 
 protected:
@@ -328,6 +340,10 @@ protected:
 	unsigned long _uptime = 0; // Time since boot
 	onSyncEvent_t onSyncEvent; // Event handler callback
 
+	/**
+	* Function that gets time from NTP server and convert it to Unix time format
+	* @param[out] Time form NTP in Unix Time Format.
+	*/
 	static time_t s_getTime();
 
 	/**
