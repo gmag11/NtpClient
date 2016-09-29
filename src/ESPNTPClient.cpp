@@ -94,7 +94,7 @@ int NTPClient::getTimeZone()
 }*/
 
 time_t NTPClient::s_getTime() {
-	NTP.getTime();
+	return NTP.getTime();
 }
 
 time_t NTPClient::getTime()
