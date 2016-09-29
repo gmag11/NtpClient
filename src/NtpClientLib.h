@@ -75,6 +75,8 @@ using namespace placeholders;
 
 #elif defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
 #define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
+//#define NETWORK_TYPE NETWORK_W5100
+
 #if NETWORK_TYPE == NETWORK_W5100
 #include <SPI.h>
 #include <EthernetUdp.h>
