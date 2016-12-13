@@ -43,17 +43,22 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
 #endif // !WIFI_CONFIG_H
 
+#define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
+
+// Start NTP only after IP network is connected
 void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
 	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
 	NTP.begin("pool.ntp.org", 1, true);
 	NTP.setInterval(63);
-	digitalWrite(2, LOW);
+	digitalWrite(ONBOARDLED, LOW); // Turn on LED
 }
 
+// Manage network disconnection
 void onSTADisconnected(WiFiEventStationModeDisconnected event_info) {
 	Serial.printf("Disconnected from SSID: %s\n", event_info.ssid.c_str());
 	Serial.printf("Reason: %d\n", event_info.reason);
-	digitalWrite(2, HIGH);
+	digitalWrite(ONBOARDLED, HIGH); // Turn off LED
+	//NTP.stop(); // NTP sync can be disabled to avoid sync errors
 }
 
 void processSyncEvent(NTPSyncEvent_t ntpEvent) {
@@ -80,8 +85,9 @@ void setup()
 	Serial.begin(115200);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-	pinMode(2, OUTPUT);
-	digitalWrite(2, HIGH);
+	
+	pinMode(ONBOARDLED, OUTPUT); // Onboard LED
+	digitalWrite(ONBOARDLED, HIGH); // Switch off LED
 
 	NTP.onNTPSyncEvent([](NTPSyncEvent_t event) {
 		ntpEvent = event;
