@@ -56,6 +56,23 @@ void onSTADisconnected(WiFiEventStationModeDisconnected event_info) {
 	digitalWrite(2, HIGH);
 }
 
+void processSyncEvent(NTPSyncEvent_t ntpEvent) {
+	if (ntpEvent) {
+		Serial.print("Time Sync error: ");
+		if (ntpEvent == noResponse)
+			Serial.println("NTP server not reachable");
+		else if (ntpEvent == invalidAddress)
+			Serial.println("Invalid NTP server address");
+	}
+	else {
+		Serial.print("Got NTP time: ");
+		Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
+	}
+}
+
+boolean syncEventTriggered = false;
+NTPSyncEvent_t ntpEvent;
+
 void setup()
 {	
 	static WiFiEventHandler e1, e2;
@@ -66,18 +83,9 @@ void setup()
 	pinMode(2, OUTPUT);
 	digitalWrite(2, HIGH);
 
-	NTP.onNTPSyncEvent([](NTPSyncEvent_t ntpEvent) {
-		if (ntpEvent) {
-			Serial.print("Time Sync error: ");
-			if (ntpEvent == noResponse)
-				Serial.println("NTP server not reachable");
-			else if (ntpEvent == invalidAddress)
-				Serial.println("Invalid NTP server address");
-		}
-		else {
-			Serial.print("Got NTP time: ");
-			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
-		}
+	NTP.onNTPSyncEvent([](NTPSyncEvent_t event) {
+		ntpEvent = event;
+		syncEventTriggered = true;
 	});
 
 	// Deprecated
@@ -94,6 +102,11 @@ void loop()
 {
 	static int i = 0;
 	static int last = 0;
+
+	if (syncEventTriggered) {
+		processSyncEvent(ntpEvent);
+		syncEventTriggered = false;
+	}
 
 	if ((millis() - last) > 5100) {
 		//Serial.println(millis() - last);
