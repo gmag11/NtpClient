@@ -79,9 +79,12 @@ void setup()
 			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
 		}
 	});
-	WiFi.onEvent([](WiFiEvent_t e) {
+
+	// Deprecated
+	/*WiFi.onEvent([](WiFiEvent_t e) {
 		Serial.printf("Event wifi -----> %d\n", e);
-	});
+	});*/
+
 	e1 = WiFi.onStationModeGotIP(onSTAGotIP);// As soon WiFi is connected, start NTP Client
 	e2 = WiFi.onStationModeDisconnected(onSTADisconnected);
 
