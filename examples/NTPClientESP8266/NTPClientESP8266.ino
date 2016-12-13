@@ -70,8 +70,8 @@ void processSyncEvent(NTPSyncEvent_t ntpEvent) {
 	}
 }
 
-boolean syncEventTriggered = false;
-NTPSyncEvent_t ntpEvent;
+boolean syncEventTriggered = false; // True if a time even has been triggered
+NTPSyncEvent_t ntpEvent; // Last triggered event
 
 void setup()
 {	
