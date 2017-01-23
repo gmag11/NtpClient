@@ -136,12 +136,19 @@ time_t NTPClient::getTime()
 			if (onSyncEvent != NULL)
 				onSyncEvent(noResponse);     // call the handler
 			setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
+            if (onSyncEvent)
+                onSyncEvent(noResponse);
+            return 0;
 		}
 
+        if (onSyncEvent)
+            onSyncEvent(timeSyncd);
 		return secsSince1970;
 	}
 	else {
 		DEBUGLOG("-- NTP Error. WiFi not connected.\r\n");
+        if (onSyncEvent)
+            onSyncEvent(noResponse);
 		return 0;
 	}
 }
