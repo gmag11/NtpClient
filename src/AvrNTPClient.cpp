@@ -120,17 +120,23 @@ time_t getTime() {
 				DEBUGLOG(F("Succeccful NTP sync at "));
 				DEBUGLOGCR(NTP.getTimeDateString(NTP.getLastNTPSync()));
 
+                if (onSyncEvent)
+                    onSyncEvent(timeSyncd);
 				return timeValue;
 			}
 		}
 		DEBUGLOGCR(F("-- No NTP Response :-("));
 		udp.stop();
 		setSyncInterval(NTP.getShortInterval()); // Retry connection more often
+        if (onSyncEvent)
+            onSyncEvent(noResponse);
 		return 0; // return 0 if unable to get the time 
 	}
 	else {
 		DEBUGLOGCR(F("-- Invalid address :-(("));
-		udp.stop();
+        if (onSyncEvent)
+            onSyncEvent(invalidAddress);
+        udp.stop();
 		return 0; // return 0 if unable to get the time 
 	}
 }
@@ -204,13 +210,17 @@ time_t getTime() {
 			NTP.setLastNTPSync(timeValue);
 			DEBUGLOG(F("Succeccful NTP sync at "));
 			DEBUGLOGCR(NTP.getTimeDateString(NTP.getLastNTPSync()));
-
+            
+            if (onSyncEvent)
+                onSyncEvent(timeSyncd);
 			return timeValue;
 		}
 	}
 	DEBUGLOGCR(F("-- No NTP Response :-("));
 	udp.stop();
 	setSyncInterval(NTP.getShortInterval()); // Retry connection more often
+    if (onSyncEvent)
+        onSyncEvent(noResponse);
 	return 0; // return 0 if unable to get the time 
 }
 
