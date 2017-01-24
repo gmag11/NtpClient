@@ -133,8 +133,6 @@ time_t NTPClient::getTime()
 		}
 		else {
 			DEBUGLOG("-- NTP error :-(\r\n");
-			if (onSyncEvent != NULL)
-				onSyncEvent(noResponse);     // call the handler
 			setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
             if (onSyncEvent)
                 onSyncEvent(noResponse);
