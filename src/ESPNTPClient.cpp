@@ -127,8 +127,6 @@ time_t NTPClient::getTime()
 				_firstSync = secsSince1970;
 				DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
 			}
-			if (onSyncEvent != NULL)
-				onSyncEvent(timeSyncd);     // call the handler
 			DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
 		}
 		else {
