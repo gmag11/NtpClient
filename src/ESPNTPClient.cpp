@@ -77,6 +77,7 @@ bool NTPClient::setTimeZone(int timeZone)
 	sntp_stop();
 	bool result = sntp_set_timezone(timeZone);
 	sntp_init();
+    setTime(getTime());
 	DEBUGLOG("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
 	return result;
 	//return true;
@@ -227,6 +228,7 @@ void NTPClient::setDayLight(bool daylight)
 {
 	_daylight = daylight;
 	DEBUGLOG("--Set daylight %s\r\n", daylight? "ON" : "OFF");
+    setTime(getTime());
 }
 
 bool NTPClient::getDayLight()

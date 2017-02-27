@@ -424,6 +424,7 @@ boolean NTPClient::setTimeZone(int timeZone)
 		_timeZone = timeZone;
 		DEBUGLOGCR(F("Time zone set to "));
 		DEBUGLOGCR(_timeZone);
+        setTime(getTime());
 		return true;
 	}
 	else
@@ -435,6 +436,7 @@ void NTPClient::setDayLight(boolean daylight)
 	_daylight = daylight;
 	DEBUGLOG(F("--Set daylight saving to "));
 	DEBUGLOGCR(daylight);
+    setTime(getTime());
 }
 
 //
