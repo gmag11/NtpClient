@@ -237,7 +237,7 @@ bool NTPClient::getDayLight()
 }
 
 String NTPClient::getTimeStr(time_t moment) {
-	if ((timeStatus() != timeNotSet) || (moment != 0)) {
+	//if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += printDigits(hour(moment));
 		timeStr += ":";
@@ -246,8 +246,8 @@ String NTPClient::getTimeStr(time_t moment) {
 		timeStr += printDigits(second(moment));
 
 		return timeStr;
-	}
-	else return "Time not set";
+	//}
+	//else return "Time not set";
 }
 
 String NTPClient::getTimeStr() {
@@ -255,7 +255,7 @@ String NTPClient::getTimeStr() {
 }
 
 String NTPClient::getDateStr(time_t moment) {
-	if ((timeStatus() != timeNotSet) || (moment != 0)) {
+	//if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 
 		timeStr += printDigits(day(moment));
@@ -265,8 +265,8 @@ String NTPClient::getDateStr(time_t moment) {
 		timeStr += String(year(moment));
 
 		return timeStr;
-	}
-	else return "Date not set";
+	//}
+	//else return "Date not set";
 }
 
 String NTPClient::getDateStr() {
@@ -274,24 +274,19 @@ String NTPClient::getDateStr() {
 }
 
 String NTPClient::getTimeDateString(time_t moment) {
-	if ((timeStatus() != timeNotSet) || (moment != 0)) {
+	//if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
 		timeStr += getTimeStr(moment);
 		timeStr += " ";
 		timeStr += getDateStr(moment);
 
 		return timeStr;
-	}
-	else {
-		return "Time not set";
-	}
+	//}
+	//else return "Time not set";
 }
 
 String NTPClient::getTimeDateString() {
-	if (timeStatus() == timeSet) {
 		return getTimeDateString(now());
-	}
-	return "Time not set";
 }
 
 String NTPClient::printDigits(int digits) {
