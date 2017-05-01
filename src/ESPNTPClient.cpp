@@ -124,8 +124,8 @@ time_t NTPClient::getTime()
 			}
 			getFirstSync();
 			_lastSyncd = secsSince1970;
-			if (!_firstSync) {
-				_firstSync = secsSince1970;
+			if (!_firstSync) { // first sync is not set
+				_firstSync = secsSince1970 - getUptime();
 				DEBUGLOG("First sync! %s\r\n", getTimeDateString(getFirstSync()).c_str());
 			}
 			DEBUGLOG("Succeccful NTP sync at %s\r\n", getTimeDateString(getLastNTPSync()).c_str());
