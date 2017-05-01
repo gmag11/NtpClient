@@ -335,6 +335,7 @@ public:
 protected:
 
 	bool _daylight; //Does this time zone have daylight saving?
+    int8_t _timeZone; //Keep track of set time zone offset
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
 	time_t _lastSyncd = 0; //Stored time of last successful sync
