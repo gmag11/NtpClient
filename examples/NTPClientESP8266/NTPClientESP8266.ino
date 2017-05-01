@@ -83,6 +83,7 @@ void setup()
 	static WiFiEventHandler e1, e2;
 
 	Serial.begin(115200);
+    Serial.println();
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
 	
