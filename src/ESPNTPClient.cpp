@@ -74,12 +74,17 @@ String NTPClient::getNtpServerName(int idx)
 bool NTPClient::setTimeZone(int timeZone)
 {
 	//if ((timeZone >= -11) && (timeZone <= 13)) {
-	sntp_stop();
-	bool result = sntp_set_timezone(timeZone);
-	sntp_init();
-    setTime(getTime());
-	DEBUGLOG("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
-	return result;
+        // Temporarily set time to new time zone, before trying to synchronize
+        int8_t timeDiff = timeZone - _timeZone;
+        _timeZone = timeZone;
+        setTime(now() + timeDiff * 3600);
+
+	    sntp_stop();
+	    bool result = sntp_set_timezone(timeZone);
+	    sntp_init();
+        setTime(getTime());
+	    DEBUGLOG("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
+	    return result;
 	//return true;
 	//}
 	//return false;
@@ -156,14 +161,15 @@ time_t NTPClient::getTime()
     }
 }
 
-bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
+bool NTPClient::begin(String ntpServerName, int timeZone, bool daylight)
 {
 	if (!setNtpServerName(ntpServerName)) {
 		return false;
 	}
-	if (!setTimeZone(timeOffset)) {
+	if (!setTimeZone(timeZone)) {
 		return false;
 	}
+    _timeZone = timeZone;
 	sntp_init();
 	setDayLight(daylight);
 	_lastSyncd = 0;
