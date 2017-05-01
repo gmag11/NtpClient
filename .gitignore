@@ -216,3 +216,4 @@ src/examples/NTPClient/__vm/
 *.filters
 *.sln
 examples/NTPClient/__vm/
+examples/NTPClientESP8266/WifiConfigGM.h
