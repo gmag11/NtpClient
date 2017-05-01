@@ -135,7 +135,10 @@ time_t NTPClient::getTime()
 			setSyncInterval(getShortInterval()); // Fast refresh frequency, until successful sync
             if (onSyncEvent)
                 onSyncEvent(noResponse);
-            return 0;
+            if (!_firstSync) // first sync is not set
+                return 0;
+            else
+                return now();
 		}
 
         if (onSyncEvent)
@@ -146,8 +149,11 @@ time_t NTPClient::getTime()
 		DEBUGLOG("-- NTP Error. WiFi not connected.\r\n");
         if (onSyncEvent)
             onSyncEvent(noResponse);
-		return 0;
-	}
+        if (!_firstSync) // first sync is not set
+            return 0;
+        else
+            return now();
+    }
 }
 
 bool NTPClient::begin(String ntpServerName, int timeOffset, bool daylight)
