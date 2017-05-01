@@ -109,11 +109,11 @@ time_t NTPClient::getTime()
 	if (WiFi.isConnected())	{
 		DEBUGLOG("-- Transmit NTP Request\r\n");
 		uint32 secsSince1970 = sntp_get_current_timestamp();
-		NTP.getUptime();
+		NTP.getUptime(); // Keep uptime updated to avoid overflow if not called
 		if (secsSince1970) {
 			setSyncInterval(NTP.getInterval()); // Normal refresh frequency
 			DEBUGLOG("Sync frequency set low\r\n");
-			if (getDayLight()) {
+			if (_daylight) {
 				if (summertime(year(secsSince1970), month(secsSince1970), day(secsSince1970), hour(secsSince1970), getTimeZone())) {
 					secsSince1970 += SECS_PER_HOUR;
 					DEBUGLOG("Summer Time\r\n");
