@@ -45,10 +45,12 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 
 #define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
 
+int8_t timeZone = 1;
+
 // Start NTP only after IP network is connected
 void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
 	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
-	NTP.begin("pool.ntp.org", 1, true);
+	NTP.begin("pool.ntp.org", timeZone, true);
 	NTP.setInterval(63);
 	digitalWrite(ONBOARDLED, LOW); // Turn on LED
 }
