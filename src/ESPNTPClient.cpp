@@ -301,6 +301,16 @@ String NTPClient::getTimeDateString() {
 		return getTimeDateString(now());
 }
 
+String NTPClient::getJSONTimeDateString(time_t moment) {
+	String timeStr = String(year(moment)) + '-' + printDigits(month(moment)) + '-' + printDigits(day(moment)) + 'T' +
+		printDigits(hour(moment)) + ':' + printDigits(minute(moment)) + ':' + printDigits(second(moment)) + 'Z';
+	return timeStr;
+}
+
+String NTPClient::getJSONTimeDateString() {
+		return getJSONTimeDateString(now());
+}
+
 String NTPClient::printDigits(int digits) {
 	// utility for digital clock display: prints preceding colon and leading 0
 	String digStr = "";
