@@ -275,6 +275,21 @@ public:
 	String getTimeDateString(time_t moment);
 
 	/**
+	* Convert current time and date to a String with JSON datetime format/ISO 8601.
+	* https://en.wikipedia.org/wiki/ISO_8601
+	* @param[out] String constructed from current time.
+	*/
+	String getJSONTimeDateString();
+
+	/**
+	* Convert current time and date to a String with JSON datetime format/ISO 8601.
+	* https://en.wikipedia.org/wiki/ISO_8601
+	* @param[in] time_t object to convert to String.
+	* @param[out] String constructed from current time.
+	*/
+	String getJSONTimeDateString(time_t moment);
+
+	/**
 	* Gets last successful sync time in UNIX format.
 	* @param[out] Last successful sync time. 0 equals never.
 	*/
