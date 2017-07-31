@@ -8,5 +8,5 @@
     "url": "https://github.com/gmag11/NtpClient.git"
   },
   "frameworks": "arduino",
-  "platforms": "*"
+  "platforms": "espressif8266"
 }
