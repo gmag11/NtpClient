@@ -32,6 +32,7 @@ or implied, of German Martin
 #ifdef ARDUINO_ARCH_ESP8266
 
 #include "NtpClientLib.h"
+#include <ESP8266WiFi.h>
 
 #define DBG_PORT Serial
 
@@ -46,64 +47,52 @@ NTPClient NTP;
 
 NTPClient::NTPClient()
 {
-    udp = new WiFiUDP ();
 }
 
 bool NTPClient::setNtpServerName(String ntpServerName, int idx)
 {
-    char * name = (char *)malloc ((ntpServerName.length () + 1) * sizeof (char));
-    if (name == NULL)
-        return false;
-    ntpServerName.toCharArray (name, ntpServerName.length () + 1);
-    DEBUGLOG ("NTP server set to %s\n", name);
-    free (_ntpServerName);
-    _ntpServerName = name;
-    return true;
-}
-
-bool NTPClient::setNtpServerName (char* ntpServerName, int idx) {
-    char *name = ntpServerName;
-    if (name == NULL)
-        return false;
-    DEBUGLOG ("NTP server set to %s\n", name);
-    free (_ntpServerName);
-    _ntpServerName = name;
-    return true;
+	char * buffer = (char *)malloc((ntpServerName.length()+1) * sizeof(char));
+	if ((idx >= 0) && (idx <= 2)) {
+		sntp_stop();
+		ntpServerName.toCharArray(buffer, ntpServerName.length()+1);
+		sntp_setservername(idx, buffer);
+		DEBUGLOG("NTP server %d set to: %s \r\n", idx, buffer);
+		sntp_init();
+		return true;
+	}
+	return false;
 }
 
 String NTPClient::getNtpServerName(int idx)
 {
-	if ((idx >= 0) && (idx <= 0)) {
-        return String (_ntpServerName);
-    }
+	if ((idx >= 0) && (idx <= 2)) {
+		return String(sntp_getservername(idx));
+	}
 	return "";
-}
-
-char* NTPClient::getNtpServerNamePtr (int idx) {
-    if ((idx >= 0) && (idx <= 0)) {
-        return _ntpServerName);
-    }
-    return "";
 }
 
 bool NTPClient::setTimeZone(int timeZone)
 {
-	if ((timeZone >= -11) && (timeZone <= 13)) {
+	//if ((timeZone >= -11) && (timeZone <= 13)) {
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
         setTime(now() + timeDiff * 3600);
 
-        setTime (getTime ());
-        DEBUGLOG("NTP time zone set to: %d\r\n", timeZone);
-	    return true;
-	}
-	return false;
+	    sntp_stop();
+	    bool result = sntp_set_timezone(timeZone);
+	    sntp_init();
+        setTime(getTime());
+	    DEBUGLOG("NTP time zone set to: %d, result: %s\r\n", timeZone, result?"OK":"error");
+	    return result;
+	//return true;
+	//}
+	//return false;
 }
 
 int NTPClient::getTimeZone()
 {
-    return _timeZone;
+	return sntp_get_timezone();
 }
 
 /*void NTPClient::setLastNTPSync(time_t moment) {
