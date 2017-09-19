@@ -38,7 +38,7 @@ or implied, of German Martin
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #ifdef ESP8266
 extern "C" {
@@ -46,6 +46,9 @@ extern "C" {
 #include "sntp.h"
 }
 #include <functional>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+#include <Udp.h>
 using namespace std;
 using namespace placeholders;
 #endif
@@ -118,6 +121,8 @@ public:
 	*/
 	NTPClient();
 
+    NTPClient (UDP* udp_conn);
+
 	/**
 	* Starts time synchronization.
 	* @param[in] NTP server name as String.
@@ -135,6 +140,7 @@ public:
 	* @param[out] True if everything went ok.
 	*/
 	bool setNtpServerName(String ntpServerName, int idx = 0);
+    bool setNtpServerName (char* ntpServerName, int idx = 0);
 
 	/**
 	* Gets NTP server name
@@ -142,6 +148,7 @@ public:
 	* @param[out] NTP server name.
 	*/
 	String getNtpServerName(int idx = 0);
+    char* getNtpServerNamePtr (int idx = 0);
 
 	/**
 	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
@@ -149,20 +156,6 @@ public:
 	* @param[out] Time in UNIX time format.
 	*/
 	time_t getTime();
-#endif
-#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
-	/**
-	* Sets NTP server name.
-	* @param[in] New NTP server name.
-	* @param[out] True if everything went ok.
-	*/
-	bool	setNtpServerName(String ntpServerName);
-
-	/**
-	* Gets NTP server name
-	* @param[out] NTP server name.
-	*/
-	String getNtpServerName();
 #endif
 	
 	/**
@@ -334,8 +327,9 @@ public:
 
 protected:
 
+    UDP *udp;
 	bool _daylight; //Does this time zone have daylight saving?
-    int8_t _timeZone; //Keep track of set time zone offset
+    int8_t _timeZone = 0; //Keep track of set time zone offset
 	int _shortInterval; //Interval to set periodic time sync until first synchronization.
 	int _longInterval; //Interval to set periodic time sync
 	time_t _lastSyncd = 0; //Stored time of last successful sync
@@ -367,9 +361,8 @@ protected:
 	*/
 	String printDigits(int digits);
 
-#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
+//#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
 
-	int _timeZone = 0;
 	char* _ntpServerName;
 
 public:
@@ -393,7 +386,7 @@ private:
 	* @param[out] True if everything went ok.
 	*/
 	//bool sendNTPpacket(IPAddress &address);
-#endif
+//#endif
 };
 
 extern NTPClient NTP;
