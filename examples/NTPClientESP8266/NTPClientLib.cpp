@@ -29,8 +29,6 @@ or implied, of German Martin
 // 
 // 
 
-#ifdef ARDUINO_ARCH_ESP8266
-
 #include "NtpClientLib.h"
 
 #define DBG_PORT Serial
@@ -42,11 +40,7 @@ or implied, of German Martin
 #endif
 
 
-NTPClient NTP;
-
-NTPClient::NTPClient()
-{
-    udp = new WiFiUDP ();
+NTPClient::NTPClient () {
 }
 
 bool NTPClient::setNtpServerName(String ntpServerName, int idx)
@@ -101,8 +95,8 @@ bool NTPClient::setTimeZone(int timeZone)
 	return false;
 }
 
-boolean sendNTPpacket (IPAddress &address, UDP *udp) {
-    char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
+boolean sendNTPpacket (const char* address, UDP *udp) {
+    uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
 
                                            // set all bytes in the buffer to 0
     memset (ntpPacketBuffer, 0, NTP_PACKET_SIZE);
@@ -149,29 +143,29 @@ time_t NTPClient::getTime () {
                                     DEBUGLOGCR(F("-- Transmit NTP Request"));*/
 
                                     //if (dnsResult == 1) { //If DNS lookup resulted ok
-    sendNTPpacket (NTP.getNtpServerName ().c_str (), udp);
+    sendNTPpacket (getNtpServerName ().c_str (), udp);
     uint32_t beginWait = millis ();
     while (millis () - beginWait < 1500) {
         int size = udp->parsePacket ();
         if (size >= NTP_PACKET_SIZE) {
             DEBUGLOG ("-- Receive NTP Response\n");
             udp->read (ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-            time_t timeValue = NTP.decodeNtpMessage (ntpPacketBuffer);
-            setSyncInterval (NTP.getLongInterval ());
-            NTP.getFirstSync (); // Set firstSync value if not set before
+            time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
+            setSyncInterval (getLongInterval ());
+            getFirstSync (); // Set firstSync value if not set before
             DEBUGLOG ("Sync frequency set low\n");
             udp->stop ();
-            NTP.setLastNTPSync (timeValue);
-            DEBUGLOG ("Succeccful NTP sync at %s", NTP.getTimeDateString (NTP.getLastNTPSync ()).c_str());
+            setLastNTPSync (timeValue);
+            DEBUGLOG ("Succeccful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str());
 
             if (onSyncEvent)
                 onSyncEvent (timeSyncd);
             return timeValue;
         }
     }
-    DEBUGLOGCR (F ("-- No NTP Response :-("));
-    udp.stop ();
-    setSyncInterval (NTP.getShortInterval ()); // Retry connection more often
+    DEBUGLOG ("-- No NTP Response :-(");
+    udp->stop ();
+    setSyncInterval (getShortInterval ()); // Retry connection more often
     if (onSyncEvent)
         onSyncEvent (noResponse);
     return 0; // return 0 if unable to get the time 
@@ -190,5 +184,38 @@ time_t NTPClient::s_getTime() {
 	return NTP.getTime();
 }
 
+bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, UDP* udp_conn) {
+    if (!setNtpServerName (ntpServerName)) {
+        return false;
+    }
+    if (!setTimeZone (timeZone)) {
+        return false;
+    }
+    if (udp_conn)
+        udp = udp_conn;
+    else
+        udp = new WiFiUDP ();
 
-#endif // ARDUINO_ARCH_ESP8266
+    //_timeZone = timeZone;
+    setDayLight (daylight);
+    _lastSyncd = 0;
+
+    if (!setInterval (DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
+        return false;
+    }
+    DEBUGLOG ("Time sync started\r\n");
+
+    setSyncInterval (getShortInterval ());
+    setSyncProvider (s_getTime);
+
+    return true;
+}
+
+bool NTPClient::stop () {
+    setSyncProvider (NULL);
+    DEBUGLOG ("Time sync disabled\n");
+
+    return true;
+}
+
+NTPClient NTP;

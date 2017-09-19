@@ -72,6 +72,7 @@ using namespace placeholders;
 #define DEFAULT_NTP_SHORTINTERVAL 5 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
 
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
 #ifdef ARDUINO_ARCH_ESP8266
 #define NETWORK_TYPE NETWORK_ESP8266
@@ -95,7 +96,6 @@ using namespace placeholders;
 #include <Dhcp.h>
 #endif // NETWORK_TYPE
 
-const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
@@ -119,9 +119,7 @@ public:
 	/**
 	* Construct NTP client.
 	*/
-	NTPClient();
-
-    NTPClient (UDP* udp_conn);
+    NTPClient ();
 
 	/**
 	* Starts time synchronization.
@@ -130,7 +128,7 @@ public:
 	* @param[in] true if this time zone has dayligth saving.
 	* @param[out] true if everything went ok.
 	*/
-	bool begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false);
+	bool begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, UDP* udp_conn = NULL);
 
 #ifdef ARDUINO_ARCH_ESP8266
 	/**
