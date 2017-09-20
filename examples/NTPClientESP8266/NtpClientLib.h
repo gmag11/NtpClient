@@ -41,10 +41,10 @@ or implied, of German Martin
 #define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #ifdef ESP8266
-extern "C" {
-#include "user_interface.h"
-#include "sntp.h"
-}
+//extern "C" {
+//#include "user_interface.h"
+//#include "sntp.h"
+//}
 #include <functional>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -130,23 +130,21 @@ public:
 	*/
 	bool begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, UDP* udp_conn = NULL);
 
-#ifdef ARDUINO_ARCH_ESP8266
 	/**
 	* Sets NTP server name.
 	* @param[in] New NTP server name.
-	* @param[in] Server index (0-2).
 	* @param[out] True if everything went ok.
 	*/
-	bool setNtpServerName(String ntpServerName, int idx = 0);
-    bool setNtpServerName (char* ntpServerName, int idx = 0);
+	bool setNtpServerName(String ntpServerName);
+    bool setNtpServerName (char* ntpServerName);
 
 	/**
 	* Gets NTP server name
 	* @param[in] Server index (0-2).
 	* @param[out] NTP server name.
 	*/
-	String getNtpServerName(int idx = 0);
-    char* getNtpServerNamePtr (int idx = 0);
+	String getNtpServerName();
+    char* getNtpServerNamePtr ();
 
 	/**
 	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
@@ -154,7 +152,6 @@ public:
 	* @param[out] Time in UNIX time format.
 	*/
 	time_t getTime();
-#endif
 	
 	/**
 	* Sets timezone.
@@ -195,7 +192,7 @@ public:
 	* @param[out] Interval for normal operation, in seconds.
 	*/
 	int getInterval();
-
+    
 	/**
 	* Changes sync period not sync'd status.
 	* @param[out] Interval while time is not first adjusted yet, in seconds.
@@ -225,7 +222,7 @@ public:
 	* @param[out] String constructed from current time.
 	* TODO: Add internationalization support
 	*/
-	String getTimeStr();
+    String getTimeStr () { return getTimeStr (now ()); }
 
 	/**
 	* Convert a time in UNIX format to a String representing time.
@@ -240,7 +237,7 @@ public:
 	* @param[out] String constructed from current date.
 	* TODO: Add internationalization support
 	*/
-	String getDateStr();
+    String getDateStr () { return getDateStr (now ()); }
 
 	/**
 	* Convert a time in UNIX format to a String representing its date.
@@ -255,7 +252,7 @@ public:
 	* @param[out] String constructed from current time.
 	* TODO: Add internationalization support
 	*/
-	String getTimeDateString();
+    String getTimeDateString () { return getTimeDateString (now ()); }
 
 	/**
 	* Convert current time and date to a String.
@@ -326,14 +323,15 @@ public:
 protected:
 
     UDP *udp;
-	bool _daylight; //Does this time zone have daylight saving?
-    int8_t _timeZone = 0; //Keep track of set time zone offset
-	int _shortInterval; //Interval to set periodic time sync until first synchronization.
-	int _longInterval; //Interval to set periodic time sync
-	time_t _lastSyncd = 0; //Stored time of last successful sync
-	time_t _firstSync = 0; //Stored time of first successful sync after boot
-	unsigned long _uptime = 0; // Time since boot
-	onSyncEvent_t onSyncEvent; // Event handler callback
+	bool _daylight;             ///< Does this time zone have daylight saving?
+    int8_t _timeZone = 0;       ///< Keep track of set time zone offset
+    char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
+    int _shortInterval;         ///< Interval to set periodic time sync until first synchronization.
+	int _longInterval;          ///< Interval to set periodic time sync
+	time_t _lastSyncd = 0;      ///< Stored time of last successful sync
+	time_t _firstSync = 0;      ///< Stored time of first successful sync after boot
+	unsigned long _uptime = 0;  ///< Time since boot
+	onSyncEvent_t onSyncEvent;  ///< Event handler callback
 
 	/**
 	* Function that gets time from NTP server and convert it to Unix time format
@@ -357,11 +355,8 @@ protected:
 	* @param[in] Digit to evaluate the need of leading 0.
 	* @param[out] Result digit with leading 0 if needed.
 	*/
-	String printDigits(int digits);
+	//String printDigits(int digits);
 
-//#if defined ARDUINO_ARCH_AVR || defined ARDUINO_ARCH_SAMD || defined ARDUINO_ARCH_ARC32
-
-	char* _ntpServerName;
 
 public:
 	/**

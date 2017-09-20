@@ -43,7 +43,7 @@ or implied, of German Martin
 NTPClient::NTPClient () {
 }
 
-bool NTPClient::setNtpServerName(String ntpServerName, int idx)
+bool NTPClient::setNtpServerName(String ntpServerName)
 {
     char * name = (char *)malloc ((ntpServerName.length () + 1) * sizeof (char));
     if (!name)
@@ -55,7 +55,7 @@ bool NTPClient::setNtpServerName(String ntpServerName, int idx)
     return true;
 }
 
-bool NTPClient::setNtpServerName (char* ntpServerName, int idx) {
+bool NTPClient::setNtpServerName (char* ntpServerName) {
     char *name = ntpServerName;
     if (name == NULL)
         return false;
@@ -65,19 +65,13 @@ bool NTPClient::setNtpServerName (char* ntpServerName, int idx) {
     return true;
 }
 
-String NTPClient::getNtpServerName(int idx)
+String NTPClient::getNtpServerName()
 {
-	if ((idx >= 0) && (idx <= 0)) {
-        return String (_ntpServerName);
-    }
-	return "";
+    return String (_ntpServerName);
 }
 
-char* NTPClient::getNtpServerNamePtr (int idx) {
-    if ((idx >= 0) && (idx <= 0)) {
-        return _ntpServerName;
-    }
-    return "";
+char* NTPClient::getNtpServerNamePtr () {
+    return _ntpServerName;
 }
 
 bool NTPClient::setTimeZone(int timeZone)
@@ -216,6 +210,166 @@ bool NTPClient::stop () {
     DEBUGLOG ("Time sync disabled\n");
 
     return true;
+}
+
+bool NTPClient::setInterval (int interval) {
+    if (interval >= 10) {
+        if (_longInterval != interval) {
+            _longInterval = interval;
+            DEBUGLOG ("Sync interval set to %d\n",interval);
+            if (timeStatus () != timeSet)
+                setSyncInterval (interval);
+        }
+        return true;
+    } else
+        return false;
+}
+
+bool NTPClient::setInterval (int shortInterval, int longInterval) {
+    if (shortInterval >= 10 && _longInterval >= 10) {
+        _shortInterval = shortInterval;
+        _longInterval = longInterval;
+        if (timeStatus () != timeSet) {
+            setSyncInterval (shortInterval);
+        } else {
+            setSyncInterval (longInterval);
+        }
+        DEBUGLOG ("Short sync interval set to %d\n",shortInterval);
+        DEBUGLOG ("Long sync interval set to %d\n",longInterval);
+        return true;
+    } else
+        return false;
+}
+
+int NTPClient::getInterval () {
+    return _longInterval;
+}
+
+int NTPClient::getShortInterval () {
+    return _shortInterval;
+}
+
+void NTPClient::setDayLight (bool daylight) {
+    _daylight = daylight;
+    DEBUGLOG ("--Set daylight saving %s\n", daylight ? "ON" : "OFF");
+    setTime (getTime ());
+}
+
+bool NTPClient::getDayLight () {
+    return _daylight;
+}
+
+String NTPClient::getTimeStr (time_t moment) {
+    char timeStr[10];
+    sprintf (timeStr, "%2d:%2d:%2d", hour (moment), minute (moment), second (moment));
+    
+    return timeStr;
+}
+
+String NTPClient::getDateStr (time_t moment) {
+    char dateStr[12];
+    sprintf (dateStr, "%2d/%2d/%4d", day (moment), month (moment), year (moment));
+
+    return dateStr;
+}
+
+String NTPClient::getTimeDateString (time_t moment) {
+    return getTimeStr (moment) + " " + getDateStr (moment);
+}
+
+time_t NTPClient::getLastNTPSync () {
+    return _lastSyncd;
+}
+
+void NTPClient::onNTPSyncEvent (onSyncEvent_t handler) {
+    onSyncEvent = handler;
+}
+
+time_t NTPClient::getUptime () {
+    _uptime = _uptime + (millis () - _uptime);
+    return _uptime / 1000;
+}
+
+String NTPClient::getUptimeString () {
+    uint days;
+    uint8 hours;
+    uint8 minutes;
+    uint8 seconds;
+
+    time_t uptime = getUptime ();
+
+    seconds = uptime % SECS_PER_MIN;
+    uptime -= seconds;
+    minutes = (uptime % SECS_PER_HOUR) / SECS_PER_MIN;
+    uptime -= minutes * SECS_PER_MIN;
+    hours = (uptime % SECS_PER_DAY) / SECS_PER_HOUR;
+    uptime -= hours * SECS_PER_HOUR;
+    days = uptime / SECS_PER_DAY;
+
+    char uptimeStr[20];
+    sprintf (uptimeStr, "%d days %02d:%02d:%02d", days, hours, minutes, seconds);
+
+    return uptimeStr;
+}
+
+time_t NTPClient::getLastBootTime () {
+    if (timeStatus () == timeSet) {
+        return (now () - getUptime ());
+    }
+    return 0;
+}
+
+time_t NTPClient::getFirstSync () {
+    if (!_firstSync) {
+        if (timeStatus () == timeSet) {
+            _firstSync = now () - getUptime ();
+        }
+    }
+
+    return _firstSync;
+}
+
+bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte tzHours)
+// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
+{
+    if ((month<3) || (month>10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+    if ((month>3) && (month<10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+    if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day)<(1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+        return true;
+    else
+        return false;
+}
+
+boolean NTPClient::isSummerTimePeriod (time_t moment) {
+    return summertime (year (), month (), day (), hour (), getTimeZone ());
+}
+
+void NTPClient::setLastNTPSync (time_t moment) {
+    _lastSyncd = moment;
+}
+
+time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
+    unsigned long secsSince1900;
+    // convert four bytes starting at location 40 to a long integer
+    secsSince1900 = (unsigned long)messageBuffer[40] << 24;
+    secsSince1900 |= (unsigned long)messageBuffer[41] << 16;
+    secsSince1900 |= (unsigned long)messageBuffer[42] << 8;
+    secsSince1900 |= (unsigned long)messageBuffer[43];
+
+#define SEVENTY_YEARS 2208988800UL
+    time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
+
+    if (_daylight) {
+        if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp), _timeZone)) {
+            timeTemp += SECS_PER_HOUR;
+            DEBUGLOG ("Summer Time\n");
+        } else {
+            DEBUGLOG ("Winter Time\n");
+        }
+    } else {
+        DEBUGLOG ("No daylight\n");
+    }
+    return timeTemp;
 }
 
 NTPClient NTP;
