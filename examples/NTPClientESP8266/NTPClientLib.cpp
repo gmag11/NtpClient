@@ -188,7 +188,12 @@ bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, UDP* u
     if (udp_conn)
         udp = udp_conn;
     else
+#if NETWORK_TYPE == NETWORK_W5100
+        udp = new EthernetUDP ();
+
+#else
         udp = new WiFiUDP ();
+#endif
 
     //_timeZone = timeZone;
     setDayLight (daylight);
@@ -291,10 +296,10 @@ time_t NTPClient::getUptime () {
 }
 
 String NTPClient::getUptimeString () {
-    uint days;
-    uint8 hours;
-    uint8 minutes;
-    uint8 seconds;
+    uint16_t days;
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
 
     time_t uptime = getUptime ();
 

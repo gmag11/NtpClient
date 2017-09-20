@@ -82,11 +82,11 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 //#define NETWORK_TYPE NETWORK_W5100
 
 #if NETWORK_TYPE == NETWORK_W5100
-#include <SPI.h>
+//#include <SPI.h>
 #include <EthernetUdp.h>
 #include <Ethernet.h>
-#include <Dns.h>
-#include <Dhcp.h>
+//#include <Dns.h>
+//#include <Dhcp.h>
 #elif NETWORK_TYPE == NETWORK_WIFI101
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
