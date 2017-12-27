@@ -46,9 +46,6 @@ or implied, of German Martin
 //#include "sntp.h"
 //}
 #include <functional>
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <Udp.h>
 using namespace std;
 using namespace placeholders;
 #endif
@@ -81,6 +78,7 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
 #elif defined ARDUINO_ARCH_AVR
 #define NETWORK_TYPE NETWORK_W5100
+#endif
 
 #if NETWORK_TYPE == NETWORK_W5100
 //#include <SPI.h>
@@ -92,12 +90,14 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <WiFi101.h>
-#endif // NETWORK_TYPE
-
+#elif NETWORK_TYPE == NETWORK_ESP8266
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+#include <Udp.h>
 
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
-#endif
+#endif // NETWORK_TYPE
 
 typedef enum {
 	timeSyncd, // Time successfully got from NTP server
@@ -130,7 +130,7 @@ public:
 	*/
 #if NETWORK_TYPE == NETWORK_W5100
     bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, EthernetUDP* udp_conn = NULL);
-#elif NETWORK_TYPE == NETWORK_ESP8266
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101
     bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, WiFiUDP* udp_conn = NULL);
 #endif
 
@@ -334,7 +334,7 @@ protected:
 
 #if NETWORK_TYPE == NETWORK_W5100
     EthernetUDP *udp;
-#elif NETWORK_TYPE == NETWORK_ESP8266
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101
     WiFiUDP *udp;
 #endif
 	bool _daylight;             ///< Does this time zone have daylight saving?
