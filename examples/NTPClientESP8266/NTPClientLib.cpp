@@ -108,7 +108,7 @@ boolean sendNTPpacket (const char* address, UDP *udp) {
     ntpPacketBuffer[15] = 52;
     // all NTP fields have been given values, now
     // you can send a packet requesting a timestamp: 
-    udp->beginPacket (address, 123); //NTP requests are to port 123
+    udp->beginPacket (address, DEFAULT_NTP_PORT); //NTP requests are to port 123
     udp->write(ntpPacketBuffer, NTP_PACKET_SIZE);
     udp->endPacket ();
     return true;
@@ -140,7 +140,7 @@ time_t NTPClient::getTime () {
                                     //if (dnsResult == 1) { //If DNS lookup resulted ok
     sendNTPpacket (getNtpServerName ().c_str (), udp);
     uint32_t beginWait = millis ();
-    while (millis () - beginWait < 1500) {
+    while (millis () - beginWait < NTP_TIMEOUT) {
         int size = udp->parsePacket ();
         if (size >= NTP_PACKET_SIZE) {
             DEBUGLOG ("-- Receive NTP Response\n");
@@ -151,14 +151,14 @@ time_t NTPClient::getTime () {
             DEBUGLOG ("Sync frequency set low\n");
             udp->stop ();
             setLastNTPSync (timeValue);
-            DEBUGLOG ("Succeccful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str());
+            DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str());
 
             if (onSyncEvent)
                 onSyncEvent (timeSyncd);
             return timeValue;
         }
     }
-    DEBUGLOG ("-- No NTP Response :-(");
+    DEBUGLOG ("-- No NTP Response :-(\n");
     udp->stop ();
     setSyncInterval (getShortInterval ()); // Retry connection more often
     if (onSyncEvent)
@@ -223,7 +223,7 @@ bool NTPClient::setInterval (int interval) {
         if (_longInterval != interval) {
             _longInterval = interval;
             DEBUGLOG ("Sync interval set to %d\n",interval);
-            if (timeStatus () != timeSet)
+            if (timeStatus () == timeSet)
                 setSyncInterval (interval);
         }
         return true;
@@ -232,7 +232,7 @@ bool NTPClient::setInterval (int interval) {
 }
 
 bool NTPClient::setInterval (int shortInterval, int longInterval) {
-    if (shortInterval >= 10 && _longInterval >= 10) {
+    if (shortInterval >= 10 && longInterval >= 10) {
         _shortInterval = shortInterval;
         _longInterval = longInterval;
         if (timeStatus () != timeSet) {
@@ -267,14 +267,14 @@ bool NTPClient::getDayLight () {
 
 String NTPClient::getTimeStr (time_t moment) {
     char timeStr[10];
-    sprintf (timeStr, "%2d:%2d:%2d", hour (moment), minute (moment), second (moment));
+    sprintf (timeStr, "%02d:%02d:%02d", hour (moment), minute (moment), second (moment));
     
     return timeStr;
 }
 
 String NTPClient::getDateStr (time_t moment) {
     char dateStr[12];
-    sprintf (dateStr, "%2d/%2d/%4d", day (moment), month (moment), year (moment));
+    sprintf (dateStr, "%02d/%02d/%4d", day (moment), month (moment), year (moment));
 
     return dateStr;
 }

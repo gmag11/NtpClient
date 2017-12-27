@@ -68,6 +68,7 @@ using namespace placeholders;
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
+#define NTP_TIMEOUT 1500 // Response timeout for NTP requests
 #define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes 
 #define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
