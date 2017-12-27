@@ -124,6 +124,8 @@ public:
 	* @param[in] NTP server name as String.
 	* @param[in] Time offset from UTC.
 	* @param[in] true if this time zone has dayligth saving.
+    * @param[in] Minutes offset added to hourly offset (optional).
+    * @param[in] UDP connection instance (optional).
 	* @param[out] true if everything went ok.
 	*/
 #if NETWORK_TYPE == NETWORK_W5100
@@ -167,6 +169,11 @@ public:
 	* @param[out] Time offset in hours (plus or minus).
 	*/
 	int8_t getTimeZone();
+
+    /**
+    * Gets minutes fraction of timezone.
+    * @param[out] Minutes offset (plus or minus) added to hourly offset.
+    */
     int8_t getTimeZoneMinutes ();
 
 	/**
