@@ -77,12 +77,13 @@ char* NTPClient::getNtpServerNamePtr () {
 bool NTPClient::setTimeZone(int timeZone)
 {
 	if ((timeZone >= -11) && (timeZone <= 13)) {
+        DEBUGLOG ("Enter here. udp = %d\n", udp);
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
         setTime(now() + timeDiff * 3600);
-
-        setTime (getTime ());
+        if (udp) 
+            setTime (getTime ());
         DEBUGLOG("NTP time zone set to: %d\r\n", timeZone);
 	    return true;
 	}
