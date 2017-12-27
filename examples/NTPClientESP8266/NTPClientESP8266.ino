@@ -47,9 +47,15 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 
 int8_t timeZone = 1;
 
+void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
+    Serial.printf ("Connected to %s\r\n", ipInfo.ssid.c_str());
+}
+
+
 // Start NTP only after IP network is connected
 void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
 	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
+    Serial.printf ("Connected: %s\r\n", WiFi.status() == WL_CONNECTED? "yes" : "no");
 	NTP.begin("pool.ntp.org", timeZone, true);
 	NTP.setInterval(63);
 	digitalWrite(ONBOARDLED, LOW); // Turn on LED
@@ -82,7 +88,7 @@ NTPSyncEvent_t ntpEvent; // Last triggered event
 
 void setup()
 {	
-	static WiFiEventHandler e1, e2;
+	static WiFiEventHandler e1, e2, e3;
 
 	Serial.begin(115200);
     Serial.println();
@@ -104,7 +110,7 @@ void setup()
 
 	e1 = WiFi.onStationModeGotIP(onSTAGotIP);// As soon WiFi is connected, start NTP Client
 	e2 = WiFi.onStationModeDisconnected(onSTADisconnected);
-
+    e3 = WiFi.onStationModeConnected (onSTAConnected);
 }
 
 void loop()
