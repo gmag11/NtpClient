@@ -160,7 +160,7 @@ public:
 	* @param[in] New time offset in hours (-11 <= timeZone <= +13).
 	* @param[out] True if everything went ok.
 	*/
-	bool setTimeZone(int timeZone);
+	bool setTimeZone(int8_t timeZone, int8_t minutes = 0);
 
 	/**
 	* Gets timezone.

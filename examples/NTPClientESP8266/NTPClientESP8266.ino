@@ -46,6 +46,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
 
 int8_t timeZone = 1;
+bool wifiFirstConnected = false;
 
 void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
     Serial.printf ("Connected to %s\r\n", ipInfo.ssid.c_str());
@@ -56,9 +57,8 @@ void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
 void onSTAGotIP(WiFiEventStationModeGotIP ipInfo) {
 	Serial.printf("Got IP: %s\r\n", ipInfo.ip.toString().c_str());
     Serial.printf ("Connected: %s\r\n", WiFi.status() == WL_CONNECTED? "yes" : "no");
-	NTP.begin("pool.ntp.org", timeZone, true);
-	NTP.setInterval(63);
 	digitalWrite(ONBOARDLED, LOW); // Turn on LED
+    wifiFirstConnected = true;
 }
 
 // Manage network disconnection
@@ -117,6 +117,12 @@ void loop()
 {
 	static int i = 0;
 	static int last = 0;
+
+    if (wifiFirstConnected) {
+        wifiFirstConnected = false;
+        NTP.begin ("pool.ntp.org", timeZone, true, minutesTimeZone);
+        NTP.setInterval (63);
+    }
 
 	if (syncEventTriggered) {
 		processSyncEvent(ntpEvent);

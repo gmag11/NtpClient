@@ -74,16 +74,17 @@ char* NTPClient::getNtpServerNamePtr () {
     return _ntpServerName;
 }
 
-bool NTPClient::setTimeZone(int timeZone)
+bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes)
 {
-	if ((timeZone >= -11) && (timeZone <= 13)) {
-        DEBUGLOG ("Enter here. udp = %d\n", udp);
+	if ((timeZone >= -11) && (timeZone <= 13) && (minutes >= 0) && (minutes <= 59)) {
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
         setTime(now() + timeDiff * 3600);
         if (udp) 
+        if (udp && (timeStatus () != timeNotSet)) {
             setTime (getTime ());
+        }
         DEBUGLOG("NTP time zone set to: %d\r\n", timeZone);
 	    return true;
 	}
@@ -121,7 +122,7 @@ time_t NTPClient::getTime () {
     char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
 
-    DEBUGLOG ("Starting UDP");
+    DEBUGLOG ("Starting UDP\n");
     udp->begin (DEFAULT_NTP_PORT);
     DEBUGLOG ("UDP port: %d\n",udp->localPort());
     while (udp->parsePacket () > 0); // discard any previously received packets
