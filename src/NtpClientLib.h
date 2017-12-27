@@ -166,7 +166,8 @@ public:
 	* Gets timezone.
 	* @param[out] Time offset in hours (plus or minus).
 	*/
-	int getTimeZone();
+	int8_t getTimeZone();
+    int8_t getTimeZoneMinutes ();
 
 	/**
 	* Stops time synchronization.

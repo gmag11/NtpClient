@@ -174,9 +174,13 @@ time_t NTPClient::getTime () {
     return 0; // return 0 if unable to get the time 
 }
 
-int NTPClient::getTimeZone()
+int8_t NTPClient::getTimeZone()
 {
     return _timeZone;
+}
+
+int8_t NTPClient::getTimeZoneMinutes () {
+    return _minutesOffset;
 }
 
 /*void NTPClient::setLastNTPSync(time_t moment) {
