@@ -124,7 +124,7 @@ time_t NTPClient::getTime () {
 
     DEBUGLOG ("Starting UDP\n");
     udp->begin (DEFAULT_NTP_PORT);
-    DEBUGLOG ("UDP port: %d\n",udp->localPort());
+    //DEBUGLOG ("UDP port: %d\n",udp->localPort());
     while (udp->parsePacket () > 0); // discard any previously received packets
                                     /*dns.begin(WiFi.dnsServerIP());
                                     uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
@@ -189,7 +189,7 @@ time_t NTPClient::s_getTime() {
 
 #if NETWORK_TYPE == NETWORK_W5100
 bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, EthernetUDP* udp_conn) {
-#else
+#elif NETWORK_TYPE == NETWORK_ESP8266
 bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, WiFiUDP* udp_conn) {
 #endif
     if (!setNtpServerName (ntpServerName)) {
