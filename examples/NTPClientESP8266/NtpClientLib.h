@@ -126,7 +126,11 @@ public:
 	* @param[in] true if this time zone has dayligth saving.
 	* @param[out] true if everything went ok.
 	*/
-	bool begin(String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, UDP* udp_conn = NULL);
+#if NETWORK_TYPE == NETWORK_W5100
+    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, EthernetUDP* udp_conn = NULL);
+#else
+    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, WiFiUDP* udp_conn = NULL);
+#endif
 
 	/**
 	* Sets NTP server name.
@@ -320,7 +324,11 @@ public:
 
 protected:
 
-    UDP *udp;
+#if NETWORK_TYPE == NETWORK_W5100
+    EthernetUDP *udp;
+#else
+    WiFiUDP *udp;
+#endif
 	bool _daylight;             ///< Does this time zone have daylight saving?
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN

@@ -123,7 +123,7 @@ time_t NTPClient::getTime () {
 
     DEBUGLOG ("Starting UDP");
     udp->begin (DEFAULT_NTP_PORT);
-    DEBUGLOG ("Remote port: %d\n",udp->remotePort());
+    DEBUGLOG ("UDP port: %d\n",udp->localPort());
     while (udp->parsePacket () > 0); // discard any previously received packets
                                     /*dns.begin(WiFi.dnsServerIP());
                                     uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
@@ -157,6 +157,9 @@ time_t NTPClient::getTime () {
                 onSyncEvent (timeSyncd);
             return timeValue;
         }
+#ifdef ARDUINO_ARCH_ESP8266
+        ESP.wdtFeed ();
+#endif
     }
     DEBUGLOG ("-- No NTP Response :-(\n");
     udp->stop ();
@@ -179,11 +182,17 @@ time_t NTPClient::s_getTime() {
 	return NTP.getTime();
 }
 
-bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, UDP* udp_conn) {
+#if NETWORK_TYPE == NETWORK_W5100
+bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, EthernetUDP* udp_conn) {
+#else
+bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, WiFiUDP* udp_conn) {
+#endif
     if (!setNtpServerName (ntpServerName)) {
+        DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
     if (!setTimeZone (timeZone)) {
+        DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
     if (udp_conn)
@@ -191,7 +200,6 @@ bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, UDP* u
     else
 #if NETWORK_TYPE == NETWORK_W5100
         udp = new EthernetUDP ();
-
 #else
         udp = new WiFiUDP ();
 #endif
@@ -201,6 +209,7 @@ bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, UDP* u
     _lastSyncd = 0;
 
     if (!setInterval (DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
+        DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
     DEBUGLOG ("Time sync started\r\n");
