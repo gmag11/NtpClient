@@ -148,7 +148,11 @@ time_t NTPClient::getTime () {
             udp->read (ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
             time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
             setSyncInterval (getLongInterval ());
-            getFirstSync (); // Set firstSync value if not set before
+            if (!_firstSync) {
+            //    if (timeStatus () == timeSet)
+                _firstSync = timeValue;
+            }
+            //getFirstSync (); // Set firstSync value if not set before
             DEBUGLOG ("Sync frequency set low\n");
             udp->stop ();
             setLastNTPSync (timeValue);
@@ -336,12 +340,11 @@ time_t NTPClient::getLastBootTime () {
 }
 
 time_t NTPClient::getFirstSync () {
-    if (!_firstSync) {
+    /*if (!_firstSync) {
         if (timeStatus () == timeSet) {
             _firstSync = now () - getUptime ();
         }
-    }
-
+    }*/
     return _firstSync;
 }
 
