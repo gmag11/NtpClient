@@ -76,12 +76,12 @@ char* NTPClient::getNtpServerNamePtr () {
 
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes)
 {
-	if ((timeZone >= -11) && (timeZone <= 13) && (minutes >= 0) && (minutes <= 59)) {
+	if ((timeZone >= -11) && (timeZone <= 13) && (minutes >= -59) && (minutes <= 59)) {
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
-        setTime(now() + timeDiff * 3600);
-        if (udp) 
+        _minutesOffset = minutes;
+        setTime(now() + timeDiff * SECS_PER_HOUR + minutes * SECS_PER_MIN);
         if (udp && (timeStatus () != timeNotSet)) {
             setTime (getTime ());
         }
@@ -184,15 +184,15 @@ time_t NTPClient::s_getTime() {
 }
 
 #if NETWORK_TYPE == NETWORK_W5100
-bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, EthernetUDP* udp_conn) {
+bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, EthernetUDP* udp_conn) {
 #else
-bool NTPClient::begin (String ntpServerName, int timeZone, bool daylight, WiFiUDP* udp_conn) {
+bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, WiFiUDP* udp_conn) {
 #endif
     if (!setNtpServerName (ntpServerName)) {
         DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
-    if (!setTimeZone (timeZone)) {
+    if (!setTimeZone (timeZone, minutes)) {
         DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
@@ -373,7 +373,7 @@ time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
     secsSince1900 |= (unsigned long)messageBuffer[43];
 
 #define SEVENTY_YEARS 2208988800UL
-    time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR;
+    time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR + _minutesOffset * SECS_PER_MIN;
 
     if (_daylight) {
         if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp), _timeZone)) {

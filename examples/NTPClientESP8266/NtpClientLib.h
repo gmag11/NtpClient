@@ -127,9 +127,9 @@ public:
 	* @param[out] true if everything went ok.
 	*/
 #if NETWORK_TYPE == NETWORK_W5100
-    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, EthernetUDP* udp_conn = NULL);
+    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, EthernetUDP* udp_conn = NULL);
 #else
-    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, WiFiUDP* udp_conn = NULL);
+    bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, WiFiUDP* udp_conn = NULL);
 #endif
 
 	/**
@@ -331,6 +331,7 @@ protected:
 #endif
 	bool _daylight;             ///< Does this time zone have daylight saving?
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
+    int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
     int _shortInterval;         ///< Interval to set periodic time sync until first synchronization.
 	int _longInterval;          ///< Interval to set periodic time sync

@@ -46,6 +46,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
 
 int8_t timeZone = 1;
+int8_t minutesTimeZone = 0;
 bool wifiFirstConnected = false;
 
 void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
