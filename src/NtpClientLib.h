@@ -62,6 +62,7 @@ using namespace placeholders;
 #define NETWORK_ENC28J60        (2) // Alternate Ethernet Shield
 #define NETWORK_WIFI101			(3) // WiFi Shield 101 or MKR1000
 #define NETWORK_ESP8266			(100) // ESP8266 boards, not for Arduino using AT firmware
+#define NETWORK_ESP32           (101) // ESP32 boards
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
@@ -78,6 +79,8 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
 #elif defined ARDUINO_ARCH_AVR
 #define NETWORK_TYPE NETWORK_W5100
+#elif defined ARDUINO_ARCH_ESP32
+#define NETWORK_TYPE NETWORK_ESP32
 #endif
 
 #if NETWORK_TYPE == NETWORK_W5100
@@ -94,7 +97,10 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <Udp.h>
-
+#elif NETWORK_TYPE == NETWORK_ESP32
+#include <WiFi.h>
+#include <WiFiUdp.h>
+#include <Udp.h>
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
 #endif // NETWORK_TYPE
@@ -105,7 +111,7 @@ typedef enum {
 	invalidAddress // Address not reachable
 } NTPSyncEvent_t;
 
-#ifdef ARDUINO_ARCH_ESP8266
+#if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32
 #include <functional>
 typedef std::function<void(NTPSyncEvent_t)> onSyncEvent_t;
 #else
@@ -130,7 +136,7 @@ public:
 	*/
 #if NETWORK_TYPE == NETWORK_W5100
     bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, EthernetUDP* udp_conn = NULL);
-#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101 || NETWORK_TYPE == NETWORK_ESP32
     bool begin (String ntpServerName = DEFAULT_NTP_SERVER, int8_t timeOffset = DEFAULT_NTP_TIMEZONE, bool daylight = false, int8_t minutes = 0, WiFiUDP* udp_conn = NULL);
 #endif
 
@@ -334,7 +340,7 @@ protected:
 
 #if NETWORK_TYPE == NETWORK_W5100
     EthernetUDP *udp;
-#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101 || NETWORK_TYPE == NETWORK_ESP32
     WiFiUDP *udp;
 #endif
 	bool _daylight;             ///< Does this time zone have daylight saving?
