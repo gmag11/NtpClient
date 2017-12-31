@@ -147,14 +147,36 @@ public:
 	*/
 	bool setNtpServerName(String ntpServerName);
     bool setNtpServerName (char* ntpServerName);
+    
+    /**
+    * Sets NTP server name. DEPRECATED, only for compatibility with older versions
+    * @param[in] New NTP server name.
+    * @param[in] Server index (0-2).
+    * @param[out] True if everything went ok.
+    */
+    bool setNtpServerName (String ntpServerName, int idx) {
+        if (idx < 0 || idx > 2)
+            return false;
+        return setNtpServerName (ntpServerName);
+    }
 
 	/**
 	* Gets NTP server name
-	* @param[in] Server index (0-2).
 	* @param[out] NTP server name.
 	*/
 	String getNtpServerName();
     char* getNtpServerNamePtr ();
+    
+    /**
+    * Gets NTP server name. DEPRECATED, only for compatibility with older versions
+    * @param[in] Server index (0-2).
+    * @param[out] NTP server name.
+    */
+    String getNtpServerName (int idx) {
+        if (idx < 0 || idx > 2)
+            return "";
+        return getNtpServerName ();
+    }
 
 	/**
 	* Starts a NTP time request to server. Returns a time in UNIX time format. Normally only called from library.
