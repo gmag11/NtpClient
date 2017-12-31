@@ -34,7 +34,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 */
 
 #include <TimeLib.h>
-#include "WifiConfigGM.h"
+//#include "WifiConfig.h"
 #include <NtpClientLib.h>
 #include <WiFi.h>
 
