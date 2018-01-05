@@ -1,13 +1,13 @@
-#NtpClientLib
+# NtpClientLib
 
-##Introduction
+## Introduction
 There are some NTP client examples around. You can see some examples, like [this].
 
 In a device like ESP8266 or any Internet connected Arduino having NTP synchronization is well convenient. Using that example you can add NTP client to your projects but I was looking for a quicker way to add it, using something like NTPClient class.
 
 So I decided to do my own NTP client libary to sync ESP8266 time via WiFi using Arduino IDE. It can also be used on any ethernet or WiFi connected Arduino, although as I do not have any WiFi enabled arduino code is not tested. Testers are welcome.
 
-##Description
+## Description
 This is a NTP library to be able to get time from NTP server with my ESP8266s. Initial support for regular Arduino is available. Please test it and inform via GitHub.
 
 Using the library is fairly easy. A NTP object is created inside library. You may use default values by using `NTP.begin()` without parameters. After that, synchronization is done regularly without user intervention. Some parameters can be adjusted: server, sync frequency, time offset.
@@ -26,7 +26,7 @@ Called funtion format must be like `void eventHandler(NTPSyncEvent_t event)`.
 
 ESP8266 example uses a simple function to turn a flag on, so actual event handling code is run inside main loop.
 
-##Example for Arduino
+## Example for Arduino
 
 ```Arduino
 #include <TimeLib.h>
@@ -92,7 +92,7 @@ void loop()
 }
 ```
 
-##Example for ESP8266
+## Example for ESP8266
 
 ```Arduino
 #include <TimeLib.h>
@@ -194,12 +194,12 @@ void loop()
 }
 ```
 
-##Performance
+## Performance
 Don't expect atomic-clock-like precission. This library does not take network delay into account neither uses all NTP mechanisms available to improve accuracy. It is in the range of 1 to 2 seconds. Enough for most projects.
 
 Next major update will add network delay compensation. Due to limited Time Library precission of 1 second, it probably will not affect overall accuracy.
 
-##Dependencies
+## Dependencies
 This library makes use of [Time] library. You need to add it to use NTPClientLib
 [Time]: https://github.com/PaulStoffregen/Time.git
 _________________________________________________________
