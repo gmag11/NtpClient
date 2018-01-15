@@ -25,9 +25,9 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of German Martin
 */
-// 
-// 
-// 
+//
+//
+//
 
 #ifdef ARDUINO_ARCH_ESP8266
 
@@ -51,12 +51,13 @@ NTPClient::NTPClient()
 
 bool NTPClient::setNtpServerName(String ntpServerName, int idx)
 {
-	char * buffer = (char *)malloc((ntpServerName.length()+1) * sizeof(char));
 	if ((idx >= 0) && (idx <= 2)) {
 		sntp_stop();
-		ntpServerName.toCharArray(buffer, ntpServerName.length()+1);
+		char* buffer = (char*)malloc((ntpServerName.length() + 1) * sizeof(char));
+		ntpServerName.toCharArray(buffer, ntpServerName.length() + 1);
 		sntp_setservername(idx, buffer);
 		DEBUGLOG("NTP server %d set to: %s \r\n", idx, buffer);
+		free(buffer);
 		sntp_init();
 		return true;
 	}
@@ -343,7 +344,7 @@ time_t NTPClient::getFirstSync()
 			_firstSync = now() - getUptime();
 		}
 	}
-	
+
 	return _firstSync;
 }
 
@@ -352,7 +353,7 @@ String NTPClient::getUptimeString() {
 	uint8 hours;
 	uint8 minutes;
 	uint8 seconds;
-	
+
 	long uptime = getUptime();
 
 	seconds = uptime % SECS_PER_MIN;
@@ -363,7 +364,7 @@ String NTPClient::getUptimeString() {
 	uptime -= hours * SECS_PER_HOUR;
 	days = uptime / SECS_PER_DAY;
 
-	String uptimeStr = ""; 
+	String uptimeStr = "";
 	char buffer[20];
 	sprintf(buffer, "%d days %02d:%02d:%02d", days, hours, minutes, seconds);
 	uptimeStr += buffer;
