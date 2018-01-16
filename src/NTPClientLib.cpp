@@ -76,7 +76,7 @@ char* NTPClient::getNtpServerNamePtr () {
 
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes)
 {
-	if ((timeZone >= -11) && (timeZone <= 13) && (minutes >= -59) && (minutes <= 59)) {
+    if ((timeZone >= -12) && (timeZone <= 14) && (minutes >= -59) && (minutes <= 59)) {
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
