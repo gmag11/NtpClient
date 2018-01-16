@@ -16,14 +16,14 @@ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABI
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.IN NO EVENT SHALL <COPYRIGHT HOLDER> OR
 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-	ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING
-		NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-	ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-	The views and conclusions contained in the software and documentation are those of the
-	authors and should not be interpreted as representing official policies, either expressed
-	or implied, of German Martin
+The views and conclusions contained in the software and documentation are those of the
+authors and should not be interpreted as representing official policies, either expressed
+or implied, of German Martin
 */
 
 /*
@@ -57,7 +57,7 @@ void onEvent (system_event_id_t event, system_event_info_t info) {
         Serial.printf ("Connected to %s\r\n", info.connected.ssid);
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
-        Serial.printf ("Got IP: %s\r\n", IPAddress(info.got_ip.ip_info.ip.addr).toString().c_str());
+        Serial.printf ("Got IP: %s\r\n", IPAddress (info.got_ip.ip_info.ip.addr).toString ().c_str ());
         Serial.printf ("Connected: %s\r\n", WiFi.status () == WL_CONNECTED ? "yes" : "no");
         digitalWrite (ONBOARDLED, LOW); // Turn on LED
         wifiFirstConnected = true;
@@ -71,51 +71,48 @@ void onEvent (system_event_id_t event, system_event_info_t info) {
     }
 }
 
-void processSyncEvent(NTPSyncEvent_t ntpEvent) {
-	if (ntpEvent) {
-		Serial.print("Time Sync error: ");
-		if (ntpEvent == noResponse)
-			Serial.println("NTP server not reachable");
-		else if (ntpEvent == invalidAddress)
-			Serial.println("Invalid NTP server address");
-	}
-	else {
-		Serial.print("Got NTP time: ");
-		Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
-	}
+void processSyncEvent (NTPSyncEvent_t ntpEvent) {
+    if (ntpEvent) {
+        Serial.print ("Time Sync error: ");
+        if (ntpEvent == noResponse)
+            Serial.println ("NTP server not reachable");
+        else if (ntpEvent == invalidAddress)
+            Serial.println ("Invalid NTP server address");
+    } else {
+        Serial.print ("Got NTP time: ");
+        Serial.println (NTP.getTimeDateString (NTP.getLastNTPSync ()));
+    }
 }
 
 boolean syncEventTriggered = false; // True if a time even has been triggered
 NTPSyncEvent_t ntpEvent; // Last triggered event
 
-void setup()
-{	
-	Serial.begin(115200);
-    Serial.println();
-	WiFi.mode(WIFI_STA);
-	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-	
-	pinMode(ONBOARDLED, OUTPUT); // Onboard LED
-	digitalWrite(ONBOARDLED, HIGH); // Switch off LED
+void setup () {
+    Serial.begin (115200);
+    Serial.println ();
+    WiFi.mode (WIFI_STA);
+    WiFi.begin (YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
 
-	NTP.onNTPSyncEvent([](NTPSyncEvent_t event) {
-		ntpEvent = event;
-		syncEventTriggered = true;
-	});
+    pinMode (ONBOARDLED, OUTPUT); // Onboard LED
+    digitalWrite (ONBOARDLED, HIGH); // Switch off LED
 
-	// Deprecated
-	/*WiFi.onEvent([](WiFiEvent_t e) {
-		Serial.printf("Event wifi -----> %d\n", e);
-	});*/
+    NTP.onNTPSyncEvent ([](NTPSyncEvent_t event) {
+        ntpEvent = event;
+        syncEventTriggered = true;
+    });
+
+    // Deprecated
+    /*WiFi.onEvent([](WiFiEvent_t e) {
+        Serial.printf("Event wifi -----> %d\n", e);
+    });*/
 
     WiFi.onEvent (onEvent);
 
 }
 
-void loop()
-{
-	static int i = 0;
-	static int last = 0;
+void loop () {
+    static int i = 0;
+    static int last = 0;
 
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
@@ -123,24 +120,24 @@ void loop()
         NTP.setInterval (63);
     }
 
-	if (syncEventTriggered) {
-		processSyncEvent(ntpEvent);
-		syncEventTriggered = false;
-	}
+    if (syncEventTriggered) {
+        processSyncEvent (ntpEvent);
+        syncEventTriggered = false;
+    }
 
-	if ((millis() - last) > 5100) {
-		//Serial.println(millis() - last);
-		last = millis();
-		Serial.print(i); Serial.print(" ");
-		Serial.print(NTP.getTimeDateString()); Serial.print(" ");
-		Serial.print(NTP.isSummerTime() ? "Summer Time. " : "Winter Time. ");
-		Serial.print("WiFi is ");
-		Serial.print(WiFi.isConnected() ? "connected" : "not connected"); Serial.print(". ");
-		Serial.print("Uptime: ");
-		Serial.print(NTP.getUptimeString()); Serial.print(" since ");
-		Serial.println(NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+    if ((millis () - last) > 5100) {
+        //Serial.println(millis() - last);
+        last = millis ();
+        Serial.print (i); Serial.print (" ");
+        Serial.print (NTP.getTimeDateString ()); Serial.print (" ");
+        Serial.print (NTP.isSummerTime () ? "Summer Time. " : "Winter Time. ");
+        Serial.print ("WiFi is ");
+        Serial.print (WiFi.isConnected () ? "connected" : "not connected"); Serial.print (". ");
+        Serial.print ("Uptime: ");
+        Serial.print (NTP.getUptimeString ()); Serial.print (" since ");
+        Serial.println (NTP.getTimeDateString (NTP.getFirstSync ()).c_str ());
 
-		i++;
-	}
-	delay(0);
+        i++;
+    }
+    delay (0);
 }

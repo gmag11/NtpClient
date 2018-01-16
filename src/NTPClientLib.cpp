@@ -43,8 +43,7 @@ or implied, of German Martin
 NTPClient::NTPClient () {
 }
 
-bool NTPClient::setNtpServerName(String ntpServerName)
-{
+bool NTPClient::setNtpServerName (String ntpServerName) {
     char * name = (char *)malloc ((ntpServerName.length () + 1) * sizeof (char));
     if (!name)
         return false;
@@ -65,8 +64,7 @@ bool NTPClient::setNtpServerName (char* ntpServerName) {
     return true;
 }
 
-String NTPClient::getNtpServerName()
-{
+String NTPClient::getNtpServerName () {
     return String (_ntpServerName);
 }
 
@@ -74,21 +72,20 @@ char* NTPClient::getNtpServerNamePtr () {
     return _ntpServerName;
 }
 
-bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes)
-{
+bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
     if ((timeZone >= -12) && (timeZone <= 14) && (minutes >= -59) && (minutes <= 59)) {
         // Temporarily set time to new time zone, before trying to synchronize
         int8_t timeDiff = timeZone - _timeZone;
         _timeZone = timeZone;
         _minutesOffset = minutes;
-        setTime(now() + timeDiff * SECS_PER_HOUR + minutes * SECS_PER_MIN);
+        setTime (now () + timeDiff * SECS_PER_HOUR + minutes * SECS_PER_MIN);
         if (udp && (timeStatus () != timeNotSet)) {
             setTime (getTime ());
         }
-        DEBUGLOG("NTP time zone set to: %d\r\n", timeZone);
-	    return true;
-	}
-	return false;
+        DEBUGLOG ("NTP time zone set to: %d\r\n", timeZone);
+        return true;
+    }
+    return false;
 }
 
 boolean sendNTPpacket (const char* address, UDP *udp) {
@@ -108,9 +105,9 @@ boolean sendNTPpacket (const char* address, UDP *udp) {
     ntpPacketBuffer[14] = 49;
     ntpPacketBuffer[15] = 52;
     // all NTP fields have been given values, now
-    // you can send a packet requesting a timestamp: 
+    // you can send a packet requesting a timestamp:
     udp->beginPacket (address, DEFAULT_NTP_PORT); //NTP requests are to port 123
-    udp->write(ntpPacketBuffer, NTP_PACKET_SIZE);
+    udp->write (ntpPacketBuffer, NTP_PACKET_SIZE);
     udp->endPacket ();
     return true;
 }
@@ -149,14 +146,14 @@ time_t NTPClient::getTime () {
             time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
             setSyncInterval (getLongInterval ());
             if (!_firstSync) {
-            //    if (timeStatus () == timeSet)
+                //    if (timeStatus () == timeSet)
                 _firstSync = timeValue;
             }
             //getFirstSync (); // Set firstSync value if not set before
             DEBUGLOG ("Sync frequency set low\n");
             udp->stop ();
             setLastNTPSync (timeValue);
-            DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str());
+            DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str ());
 
             if (onSyncEvent)
                 onSyncEvent (timeSyncd);
@@ -171,11 +168,10 @@ time_t NTPClient::getTime () {
     setSyncInterval (getShortInterval ()); // Retry connection more often
     if (onSyncEvent)
         onSyncEvent (noResponse);
-    return 0; // return 0 if unable to get the time 
+    return 0; // return 0 if unable to get the time
 }
 
-int8_t NTPClient::getTimeZone()
-{
+int8_t NTPClient::getTimeZone () {
     return _timeZone;
 }
 
@@ -184,11 +180,11 @@ int8_t NTPClient::getTimeZoneMinutes () {
 }
 
 /*void NTPClient::setLastNTPSync(time_t moment) {
-	_lastSyncd = moment;
+    _lastSyncd = moment;
 }*/
 
-time_t NTPClient::s_getTime() {
-	return NTP.getTime();
+time_t NTPClient::s_getTime () {
+    return NTP.getTime ();
 }
 
 #if NETWORK_TYPE == NETWORK_W5100
@@ -240,7 +236,7 @@ bool NTPClient::setInterval (int interval) {
     if (interval >= 10) {
         if (_longInterval != interval) {
             _longInterval = interval;
-            DEBUGLOG ("Sync interval set to %d\n",interval);
+            DEBUGLOG ("Sync interval set to %d\n", interval);
             if (timeStatus () == timeSet)
                 setSyncInterval (interval);
         }
@@ -258,8 +254,8 @@ bool NTPClient::setInterval (int shortInterval, int longInterval) {
         } else {
             setSyncInterval (longInterval);
         }
-        DEBUGLOG ("Short sync interval set to %d\n",shortInterval);
-        DEBUGLOG ("Long sync interval set to %d\n",longInterval);
+        DEBUGLOG ("Short sync interval set to %d\n", shortInterval);
+        DEBUGLOG ("Long sync interval set to %d\n", longInterval);
         return true;
     } else
         return false;
@@ -286,7 +282,7 @@ bool NTPClient::getDayLight () {
 String NTPClient::getTimeStr (time_t moment) {
     char timeStr[10];
     sprintf (timeStr, "%02d:%02d:%02d", hour (moment), minute (moment), second (moment));
-    
+
     return timeStr;
 }
 
@@ -331,7 +327,7 @@ String NTPClient::getUptimeString () {
     days = uptime / SECS_PER_DAY;
 
     char uptimeStr[20];
-    sprintf (uptimeStr, "%d days %02d:%02d:%02d", days, hours, minutes, seconds);
+    sprintf (uptimeStr, "%4u days %02d:%02d:%02d", days, hours, minutes, seconds);
 
     return uptimeStr;
 }
@@ -355,9 +351,9 @@ time_t NTPClient::getFirstSync () {
 bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte tzHours)
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
 {
-    if ((month<3) || (month>10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
-    if ((month>3) && (month<10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-    if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day)<(1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+    if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+    if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+    if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
         return true;
     else
         return false;
