@@ -68,7 +68,7 @@ boolean sendNTPpacket(IPAddress &address, EthernetUDP udp) {
 	ntpPacketBuffer[14] = 49;
 	ntpPacketBuffer[15] = 52;
 	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp: 
+	// you can send a packet requesting a timestamp:
 	udp.beginPacket(address, 123); //NTP requests are to port 123
 	udp.write(ntpPacketBuffer, NTP_PACKET_SIZE);
 	udp.endPacket();
@@ -130,14 +130,14 @@ time_t getTime() {
 		setSyncInterval(NTP.getShortInterval()); // Retry connection more often
         if (onSyncEvent)
             onSyncEvent(noResponse);
-		return 0; // return 0 if unable to get the time 
+		return 0; // return 0 if unable to get the time
 	}
 	else {
 		DEBUGLOGCR(F("-- Invalid address :-(("));
         if (onSyncEvent)
             onSyncEvent(invalidAddress);
         udp.stop();
-		return 0; // return 0 if unable to get the time 
+		return 0; // return 0 if unable to get the time
 	}
 }
 #elif NETWORK_TYPE == NETWORK_WIFI101
@@ -159,7 +159,7 @@ boolean sendNTPpacket(const char* address, WiFiUDP udp) {
 	ntpPacketBuffer[14] = 49;
 	ntpPacketBuffer[15] = 52;
 	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp: 
+	// you can send a packet requesting a timestamp:
 	udp.beginPacket(address, 123); //NTP requests are to port 123
 	udp.write(ntpPacketBuffer, NTP_PACKET_SIZE);
 	udp.endPacket();
@@ -210,7 +210,7 @@ time_t getTime() {
 			NTP.setLastNTPSync(timeValue);
 			DEBUGLOG(F("Succeccful NTP sync at "));
 			DEBUGLOGCR(NTP.getTimeDateString(NTP.getLastNTPSync()));
-            
+
             if (onSyncEvent)
                 onSyncEvent(timeSyncd);
 			return timeValue;
@@ -221,7 +221,7 @@ time_t getTime() {
 	setSyncInterval(NTP.getShortInterval()); // Retry connection more often
     if (onSyncEvent)
         onSyncEvent(noResponse);
-	return 0; // return 0 if unable to get the time 
+	return 0; // return 0 if unable to get the time
 }
 
 #endif //NETWORK_TYPE
@@ -304,7 +304,7 @@ String NTPClient::getTimeStr() {
 String NTPClient::getDateStr(time_t moment) {
 	if ((timeStatus() != timeNotSet) || (moment != 0)) {
 		String timeStr = "";
-		
+
 		timeStr += printDigits(day(moment));
 		timeStr += "/";
 		timeStr += printDigits(month(moment));
@@ -420,7 +420,7 @@ boolean NTPClient::setInterval(int shortInterval, int longInterval) {
 
 boolean NTPClient::setTimeZone(int timeZone)
 {
-	if (timeZone >= -11 || timeZone <= 13) {
+	if (timeZone >= -12 && timeZone <= 14) {
 		_timeZone = timeZone;
 		DEBUGLOGCR(F("Time zone set to "));
 		DEBUGLOGCR(_timeZone);
@@ -492,7 +492,7 @@ String NTPClient::getUptimeString() {
 
 	String uptimeStr = "";
 	char buffer[20];
-	sprintf(buffer, "%4d days %02d:%02d:%02d", days, hours, minutes, seconds);
+	sprintf(buffer, "%4u days %02d:%02d:%02d", days, hours, minutes, seconds);
 	uptimeStr += buffer;
 
 	return uptimeStr;
