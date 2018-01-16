@@ -48,51 +48,48 @@ or implied, of German Martin
 #endif // !WIFI_CONFIG_H
 //WiFiClient client;
 
-void setup()
-{
-	Serial.begin(115200);
-	WiFi.begin(YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
-	while (WiFi.status() != WL_CONNECTED) {
-		Serial.print('.');
-		delay(500);
-	}
-	Serial.println();
-	NTP.onNTPSyncEvent([](NTPSyncEvent_t error) {
-		if (error) {
-			Serial.print("Time Sync error: ");
-			if (error == noResponse)
-				Serial.println("NTP server not reachable");
-			else if (error == invalidAddress)
-				Serial.println("Invalid NTP server address");
-		}
-		else {
-			Serial.print("Got NTP time: ");
-			Serial.println(NTP.getTimeDateString(NTP.getLastNTPSync()));
-		}
-	});
-	NTP.begin("pool.ntp.org", 1, true);
-	NTP.setInterval(63);
+void setup () {
+    Serial.begin (115200);
+    WiFi.begin (YOUR_WIFI_SSID, YOUR_WIFI_PASSWD);
+    while (WiFi.status () != WL_CONNECTED) {
+        Serial.print ('.');
+        delay (500);
+    }
+    Serial.println ();
+    NTP.onNTPSyncEvent ([](NTPSyncEvent_t error) {
+        if (error) {
+            Serial.print ("Time Sync error: ");
+            if (error == noResponse)
+                Serial.println ("NTP server not reachable");
+            else if (error == invalidAddress)
+                Serial.println ("Invalid NTP server address");
+        } else {
+            Serial.print ("Got NTP time: ");
+            Serial.println (NTP.getTimeDateString (NTP.getLastNTPSync ()));
+        }
+    });
+    NTP.begin ("pool.ntp.org", 1, true);
+    NTP.setInterval (63);
 }
 
-void loop()
-{
-	static int i = 0;
-	static int last = 0;
+void loop () {
+    static int i = 0;
+    static int last = 0;
 
-	if ((millis() - last) > 5100) {
-		//Serial.println(millis() - last);
-		last = millis();
-		Serial.print(i); Serial.print(" ");
-		Serial.print(NTP.getTimeDateString()); Serial.print(" ");
-		Serial.print(NTP.isSummerTime() ? "Summer Time. " : "Winter Time. ");
-		Serial.print("WiFi is ");
-		
-		Serial.print((WiFi.status() == WL_CONNECTED) ? "connected" : "not connected"); Serial.print(". ");
-		Serial.print("Uptime: ");
-		Serial.print(NTP.getUptimeString()); Serial.print(" since ");
-		Serial.println(NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+    if ((millis () - last) > 5100) {
+        //Serial.println(millis() - last);
+        last = millis ();
+        Serial.print (i); Serial.print (" ");
+        Serial.print (NTP.getTimeDateString ()); Serial.print (" ");
+        Serial.print (NTP.isSummerTime () ? "Summer Time. " : "Winter Time. ");
+        Serial.print ("WiFi is ");
 
-		i++;
-	}
-	delay(0);
+        Serial.print ((WiFi.status () == WL_CONNECTED) ? "connected" : "not connected"); Serial.print (". ");
+        Serial.print ("Uptime: ");
+        Serial.print (NTP.getUptimeString ()); Serial.print (" since ");
+        Serial.println (NTP.getTimeDateString (NTP.getFirstSync ()).c_str ());
+
+        i++;
+    }
+    delay (0);
 }

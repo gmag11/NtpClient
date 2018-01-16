@@ -16,14 +16,14 @@ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABI
 FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.IN NO EVENT SHALL <COPYRIGHT HOLDER> OR
 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING
-        NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    The views and conclusions contained in the software and documentation are those of the
-    authors and should not be interpreted as representing official policies, either expressed
-    or implied, of German Martin
+The views and conclusions contained in the software and documentation are those of the
+authors and should not be interpreted as representing official policies, either expressed
+or implied, of German Martin
 */
 
 /*
@@ -34,40 +34,41 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 */
 
 #include <TimeLib.h>
-#include "WifiConfig.h"
+//#include "WifiConfig.h"
 #include <NtpClientLib.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 
 #ifndef WIFI_CONFIG_H
 #define YOUR_WIFI_SSID "YOUR_WIFI_SSID"
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
 #endif // !WIFI_CONFIG_H
 
-#define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
+#define ONBOARDLED 5 // Built in LED on ESP-12/ESP-07
 
 int8_t timeZone = 1;
 int8_t minutesTimeZone = 0;
 bool wifiFirstConnected = false;
 
-void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
-    Serial.printf ("Connected to %s\r\n", ipInfo.ssid.c_str ());
-}
+void onEvent (system_event_id_t event, system_event_info_t info) {
+    Serial.printf ("[WiFi-event] event: %d\n", event);
 
-
-// Start NTP only after IP network is connected
-void onSTAGotIP (WiFiEventStationModeGotIP ipInfo) {
-    Serial.printf ("Got IP: %s\r\n", ipInfo.ip.toString ().c_str ());
-    Serial.printf ("Connected: %s\r\n", WiFi.status () == WL_CONNECTED ? "yes" : "no");
-    digitalWrite (ONBOARDLED, LOW); // Turn on LED
-    wifiFirstConnected = true;
-}
-
-// Manage network disconnection
-void onSTADisconnected (WiFiEventStationModeDisconnected event_info) {
-    Serial.printf ("Disconnected from SSID: %s\n", event_info.ssid.c_str ());
-    Serial.printf ("Reason: %d\n", event_info.reason);
-    digitalWrite (ONBOARDLED, HIGH); // Turn off LED
-    //NTP.stop(); // NTP sync can be disabled to avoid sync errors
+    switch (event) {
+    case SYSTEM_EVENT_STA_CONNECTED:
+        Serial.printf ("Connected to %s\r\n", info.connected.ssid);
+        break;
+    case SYSTEM_EVENT_STA_GOT_IP:
+        Serial.printf ("Got IP: %s\r\n", IPAddress (info.got_ip.ip_info.ip.addr).toString ().c_str ());
+        Serial.printf ("Connected: %s\r\n", WiFi.status () == WL_CONNECTED ? "yes" : "no");
+        digitalWrite (ONBOARDLED, LOW); // Turn on LED
+        wifiFirstConnected = true;
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+        Serial.printf ("Disconnected from SSID: %s\n", info.disconnected.ssid);
+        Serial.printf ("Reason: %d\n", info.disconnected.reason);
+        digitalWrite (ONBOARDLED, HIGH); // Turn off LED
+        //NTP.stop(); // NTP sync can be disabled to avoid sync errors
+        break;
+    }
 }
 
 void processSyncEvent (NTPSyncEvent_t ntpEvent) {
@@ -87,8 +88,6 @@ boolean syncEventTriggered = false; // True if a time even has been triggered
 NTPSyncEvent_t ntpEvent; // Last triggered event
 
 void setup () {
-    static WiFiEventHandler e1, e2, e3;
-
     Serial.begin (115200);
     Serial.println ();
     WiFi.mode (WIFI_STA);
@@ -107,9 +106,8 @@ void setup () {
         Serial.printf("Event wifi -----> %d\n", e);
     });*/
 
-    e1 = WiFi.onStationModeGotIP (onSTAGotIP);// As soon WiFi is connected, start NTP Client
-    e2 = WiFi.onStationModeDisconnected (onSTADisconnected);
-    e3 = WiFi.onStationModeConnected (onSTAConnected);
+    WiFi.onEvent (onEvent);
+
 }
 
 void loop () {
