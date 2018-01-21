@@ -74,14 +74,15 @@ char* NTPClient::getNtpServerNamePtr () {
 
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
     if ((timeZone >= -12) && (timeZone <= 14) && (minutes >= -59) && (minutes <= 59)) {
-        // Temporarily set time to new time zone, before trying to synchronize
-        int8_t timeDiff = timeZone - _timeZone;
+        // Do the maths to change current time, but only if we are not yet sync'ed,
+        // we don't want to trigger the UDP query with the now() below
+        if (_lastSyncd > 0) {
+            int8_t timeDiff = timeZone - _timeZone;
+            int8_t minDiff = minutes - _minutesOffset;
+            setTime (now () + timeDiff * SECS_PER_HOUR + minDiff * SECS_PER_MIN);
+        }
         _timeZone = timeZone;
         _minutesOffset = minutes;
-        setTime (now () + timeDiff * SECS_PER_HOUR + minutes * SECS_PER_MIN);
-        if (udp && (timeStatus () != timeNotSet)) {
-            setTime (getTime ());
-        }
         DEBUGLOG ("NTP time zone set to: %d\r\n", timeZone);
         return true;
     }
@@ -270,9 +271,22 @@ int NTPClient::getShortInterval () {
 }
 
 void NTPClient::setDayLight (bool daylight) {
+
+	// Do the maths to change current time, but only if we are not yet sync'ed,
+	// we don't want to trigger the UDP query with the now() below
+    if (_lastSyncd > 0) {
+        if ((_daylight != daylight) && isSummerTimePeriod( now () )) {
+            if (daylight) {
+                setTime(now () + SECS_PER_HOUR);
+            } else {
+                setTime(now () - SECS_PER_HOUR);
+            }
+        }
+    }
+
     _daylight = daylight;
     DEBUGLOG ("--Set daylight saving %s\n", daylight ? "ON" : "OFF");
-    setTime (getTime ());
+
 }
 
 bool NTPClient::getDayLight () {
