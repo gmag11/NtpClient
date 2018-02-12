@@ -369,8 +369,8 @@ protected:
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
     int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
-    int _shortInterval;         ///< Interval to set periodic time sync until first synchronization.
-    int _longInterval;          ///< Interval to set periodic time sync
+    int _shortInterval = DEFAULT_NTP_SHORTINTERVAL;         ///< Interval to set periodic time sync until first synchronization.
+    int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
     time_t _lastSyncd = 0;      ///< Stored time of last successful sync
     time_t _firstSync = 0;      ///< Stored time of first successful sync after boot
     unsigned long _uptime = 0;  ///< Time since boot

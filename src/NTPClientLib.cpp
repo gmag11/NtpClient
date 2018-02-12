@@ -89,7 +89,7 @@ bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
     return false;
 }
 
-boolean sendNTPpacket (const char* address, UDP *udp) {
+boolean sendNTPpacket (IPAddress address, UDP *udp) {
     uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
 
                                            // set all bytes in the buffer to 0
@@ -137,7 +137,9 @@ time_t NTPClient::getTime () {
                                     DEBUGLOGCR(F("-- Transmit NTP Request"));*/
 
                                     //if (dnsResult == 1) { //If DNS lookup resulted ok
-    sendNTPpacket (getNtpServerName ().c_str (), udp);
+    WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
+    DEBUGLOG ("NTP Server IP: %s\r\n", timeServerIP.toString ().c_str ());
+    sendNTPpacket (timeServerIP, udp);
     uint32_t beginWait = millis ();
     while (millis () - beginWait < NTP_TIMEOUT) {
         int size = udp->parsePacket ();
@@ -154,7 +156,7 @@ time_t NTPClient::getTime () {
             DEBUGLOG ("Sync frequency set low\n");
             udp->stop ();
             setLastNTPSync (timeValue);
-            DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str ());
+            DEBUGLOG ("Successful NTP sync at %s\n", getTimeDateString (getLastNTPSync ()).c_str ());
 
             if (onSyncEvent)
                 onSyncEvent (timeSyncd);
@@ -214,9 +216,11 @@ bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int
     setDayLight (daylight);
     _lastSyncd = 0;
 
-    if (!setInterval (DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
-        DEBUGLOG ("Time sync not started\r\n");
-        return false;
+    if (_shortInterval == 0 && _longInterval == 0) {
+        if (!setInterval (DEFAULT_NTP_SHORTINTERVAL, DEFAULT_NTP_INTERVAL)) {
+            DEBUGLOG ("Time sync not started\r\n");
+            return false;
+        }
     }
     DEBUGLOG ("Time sync started\r\n");
 
