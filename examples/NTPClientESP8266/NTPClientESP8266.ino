@@ -44,9 +44,11 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #endif // !WIFI_CONFIG_H
 
 #define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
+#define SHOW_TIME_PERIOD 5000
 
 int8_t timeZone = 1;
 int8_t minutesTimeZone = 0;
+PROGMEM char *ntpServer = "pool.ntp.org";
 bool wifiFirstConnected = false;
 
 void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
@@ -118,7 +120,7 @@ void loop () {
 
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
-        NTP.begin ("pool.ntp.org", timeZone, true, minutesTimeZone);
+        NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
         NTP.setInterval (63);
     }
 
@@ -127,7 +129,7 @@ void loop () {
         syncEventTriggered = false;
     }
 
-    if ((millis () - last) > 5100) {
+    if ((millis () - last) > SHOW_TIME_PERIOD) {
         //Serial.println(millis() - last);
         last = millis ();
         Serial.print (i); Serial.print (" ");
