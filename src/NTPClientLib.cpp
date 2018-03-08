@@ -141,7 +141,7 @@ time_t NTPClient::getTime () {
     DEBUGLOG ("NTP Server IP: %s\r\n", timeServerIP.toString ().c_str ());
     sendNTPpacket (timeServerIP, udp);
     uint32_t beginWait = millis ();
-    while (millis () - beginWait < NTP_TIMEOUT) {
+    while (millis () - beginWait < ntpTimeout) {
         int size = udp->parsePacket ();
         if (size >= NTP_PACKET_SIZE) {
             DEBUGLOG ("-- Receive NTP Response\n");
@@ -384,6 +384,23 @@ boolean NTPClient::isSummerTimePeriod (time_t moment) {
 void NTPClient::setLastNTPSync (time_t moment) {
     _lastSyncd = moment;
 }
+
+uint16_t NTPClient::getNTPTimeout () {
+    return ntpTimeout;
+}
+
+boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
+    
+    if (milliseconds > 100) {
+        ntpTimeout = milliseconds;
+        return true;
+    }
+    
+    return false;
+    
+}
+
+
 
 time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
     unsigned long secsSince1900;
