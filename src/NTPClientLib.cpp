@@ -114,8 +114,6 @@ boolean sendNTPpacket (IPAddress address, UDP *udp) {
 }
 
 time_t NTPClient::getTime () {
-    //DNSClient dns;
-    //WiFiUDP *udpClient = new WiFiUDP(*udp);
     IPAddress timeServerIP; //NTP server IP address
     char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
@@ -124,20 +122,18 @@ time_t NTPClient::getTime () {
     udp->begin (DEFAULT_NTP_PORT);
     //DEBUGLOG ("UDP port: %d\n",udp->localPort());
     while (udp->parsePacket () > 0); // discard any previously received packets
-                                    /*dns.begin(WiFi.dnsServerIP());
-                                    uint8_t dnsResult = dns.getHostByName(NTP.getNtpServerName().c_str(), timeServerIP);
-                                    DEBUGLOG(F("NTP Server hostname: "));
-                                    DEBUGLOGCR(NTP.getNtpServerName());
-                                    DEBUGLOG(F("NTP Server IP address: "));
-                                    DEBUGLOGCR(timeServerIP);
-                                    DEBUGLOG(F("Result code: "));
-                                    DEBUGLOG(dnsResult);
-                                    DEBUGLOG(" ");
-                                    DEBUGLOGCR(F("-- IP Connected. Waiting for sync"));
-                                    DEBUGLOGCR(F("-- Transmit NTP Request"));*/
-
-                                    //if (dnsResult == 1) { //If DNS lookup resulted ok
+#if NETWORK_TYPE == NETWORK_W5100
+    DNSClient dns;
+    dns.begin (Ethernet.dnsServerIP ());
+    int8_t dnsResult = dns.getHostByName (getNtpServerName ().c_str (), timeServerIP);
+    if (dnsResult <= 0) {
+        if (onSyncEvent)
+            onSyncEvent (invalidAddress);
+        return 0; // return 0 if unable to get the time
+    }
+#else
     WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
+#endif
     DEBUGLOG ("NTP Server IP: %s\r\n", timeServerIP.toString ().c_str ());
     sendNTPpacket (timeServerIP, udp);
     uint32_t beginWait = millis ();
