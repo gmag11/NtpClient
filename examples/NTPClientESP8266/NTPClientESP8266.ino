@@ -121,7 +121,7 @@ void loop () {
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
         NTP.setInterval (63);
-        NTP.setNTPTimeout (100);
+        NTP.setNTPTimeout (1000);
         NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
     }
 
