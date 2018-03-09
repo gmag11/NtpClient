@@ -160,6 +160,7 @@ time_t NTPClient::getTime () {
         }
 #ifdef ARDUINO_ARCH_ESP8266
         ESP.wdtFeed ();
+        yield ();
 #endif
     }
     DEBUGLOG ("-- No NTP Response :-(\n");
