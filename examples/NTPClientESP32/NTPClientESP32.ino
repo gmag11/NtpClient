@@ -44,9 +44,11 @@ or implied, of German Martin
 #endif // !WIFI_CONFIG_H
 
 #define ONBOARDLED 5 // Built in LED on ESP-12/ESP-07
+#define SHOW_TIME_PERIOD 5000
 
 int8_t timeZone = 1;
 int8_t minutesTimeZone = 0;
+const PROGMEM char *ntpServer = "pool.ntp.org";
 bool wifiFirstConnected = false;
 
 void onEvent (system_event_id_t event, system_event_info_t info) {
@@ -54,7 +56,7 @@ void onEvent (system_event_id_t event, system_event_info_t info) {
 
     switch (event) {
     case SYSTEM_EVENT_STA_CONNECTED:
-        Serial.printf ("Connected to %s\r\n", info.connected.ssid);
+        Serial.printf ("Connected to %s. Asking for IP address.\r\n", info.connected.ssid);
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
         Serial.printf ("Got IP: %s\r\n", IPAddress (info.got_ip.ip_info.ip.addr).toString ().c_str ());
@@ -116,8 +118,9 @@ void loop () {
 
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
-        NTP.begin ("pool.ntp.org", timeZone, true, minutesTimeZone);
         NTP.setInterval (63);
+        NTP.setNTPTimeout (1000);
+        NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
     }
 
     if (syncEventTriggered) {
@@ -125,7 +128,7 @@ void loop () {
         syncEventTriggered = false;
     }
 
-    if ((millis () - last) > 5100) {
+    if ((millis () - last) > SHOW_TIME_PERIOD) {
         //Serial.println(millis() - last);
         last = millis ();
         Serial.print (i); Serial.print (" ");
