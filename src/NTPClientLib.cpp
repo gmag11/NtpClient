@@ -164,7 +164,9 @@ time_t NTPClient::getTime () {
     }
     DEBUGLOG ("-- No NTP Response :-(\n");
     udp->stop ();
-    setSyncInterval (getShortInterval ()); // Retry connection more often
+    if (timeStatus () != timeSet) {
+        setSyncInterval (getShortInterval ()); // Retry connection more often if sync is needed and we get no response
+    }
     if (onSyncEvent)
         onSyncEvent (noResponse);
     return 0; // return 0 if unable to get the time
