@@ -69,6 +69,7 @@ using namespace placeholders;
 #define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes 
 #define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
+#define MIN_NTP_TIMEOUT 100 // Minumum admisible ntp timeout
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 

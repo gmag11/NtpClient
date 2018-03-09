@@ -48,7 +48,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 
 int8_t timeZone = 1;
 int8_t minutesTimeZone = 0;
-PROGMEM char *ntpServer = "pool.ntp.org";
+const PROGMEM char *ntpServer = "pool.ntp.org";
 bool wifiFirstConnected = false;
 
 void onSTAConnected (WiFiEventStationModeConnected ipInfo) {
@@ -120,8 +120,9 @@ void loop () {
 
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
-        NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
         NTP.setInterval (63);
+        NTP.setNTPTimeout (100);
+        NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
     }
 
     if (syncEventTriggered) {

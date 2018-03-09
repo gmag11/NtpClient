@@ -391,11 +391,12 @@ uint16_t NTPClient::getNTPTimeout () {
 
 boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
     
-    if (milliseconds > 100) {
+    if (milliseconds >= MIN_NTP_TIMEOUT) {
         ntpTimeout = milliseconds;
+        DEBUGLOG ("Set NTP timeout to %u ms\n", milliseconds);
         return true;
     }
-    
+    DEBUGLOG ("NTP timeout should be higher than %u ms. You've tried to set %u ms\n", MIN_NTP_TIMEOUT, milliseconds);
     return false;
     
 }
