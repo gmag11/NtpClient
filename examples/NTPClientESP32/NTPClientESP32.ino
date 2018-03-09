@@ -34,7 +34,7 @@ or implied, of German Martin
 */
 
 #include <TimeLib.h>
-//#include "WifiConfig.h"
+#include "WifiConfig.h"
 #include <NtpClientLib.h>
 #include <WiFi.h>
 
