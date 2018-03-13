@@ -75,7 +75,9 @@ char* NTPClient::getNtpServerNamePtr () {
 bool NTPClient::setDSTZone (uint8_t dstZone) {
     if (dstZone < DST_ZONE_COUNT) {
         _dstZone = dstZone;
+        return true;
     }
+    return false;
 }
 
 uint8_t NTPClient::getDSTZone() {
