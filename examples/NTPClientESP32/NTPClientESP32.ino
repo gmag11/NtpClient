@@ -70,6 +70,8 @@ void onEvent (system_event_id_t event, system_event_info_t info) {
         digitalWrite (ONBOARDLED, HIGH); // Turn off LED
         //NTP.stop(); // NTP sync can be disabled to avoid sync errors
         break;
+    default:
+        break;
     }
 }
 

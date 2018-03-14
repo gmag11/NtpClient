@@ -380,7 +380,6 @@ time_t NTPClient::getFirstSync () {
 bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours)
 // input parameters: "normal time" for year, month, day, hour, weekday and tzHours (0=UTC, 1=MEZ)
 {
-
     if (DST_ZONE_EU == _dstZone) {
         if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
         if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
