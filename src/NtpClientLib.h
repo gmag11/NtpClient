@@ -66,10 +66,15 @@ using namespace placeholders;
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
-#define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes 
+#define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes
 #define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
 #define MIN_NTP_TIMEOUT 100 // Minumum admisible ntp timeout
+
+#define DST_ZONE_EU             (0)
+#define DST_ZONE_USA            (1)
+#define DST_ZONE_COUNT          (2)
+#define DEFAULT_DST_ZONE        DST_ZONE_EU
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
@@ -203,6 +208,19 @@ public:
     * @param[out] Minutes offset (plus or minus) added to hourly offset.
     */
     int8_t getTimeZoneMinutes ();
+
+    /**
+    * Sets DST zone.
+    * @param[in] New DST zone (DST_ZONE_EU || DST_ZONE_USA).
+    * @param[out] True if everything went ok.
+    */
+    bool setDSTZone (uint8_t dstZone);
+
+    /**
+    * Gets DST zone.
+    * @param[out] DST zone.
+    */
+    uint8_t getDSTZone();
 
     /**
     * Stops time synchronization.
@@ -380,6 +398,7 @@ protected:
     bool _daylight;             ///< Does this time zone have daylight saving?
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
     int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
+    uint8_t _dstZone = DEFAULT_DST_ZONE; ///< Daylight save time zone
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
     int _shortInterval = DEFAULT_NTP_SHORTINTERVAL;         ///< Interval to set periodic time sync until first synchronization.
     int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
@@ -401,10 +420,11 @@ protected:
     * @param[in] Month.
     * @param[in] Day.
     * @param[in] Hour.
+    * @param[in] Weekday (1 for sunday).
     * @param[in] Time zone offset.
     * @param[out] true if date and time are inside summertime period.
     */
-    bool summertime (int year, byte month, byte day, byte hour, byte tzHours);
+    bool summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours);
 
     /**
     * Helper function to add leading 0 to hour, minutes or seconds if < 10.

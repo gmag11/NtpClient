@@ -25,9 +25,9 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of German Martin
 */
-// 
-// 
-// 
+//
+//
+//
 
 #include "NtpClientLib.h"
 
@@ -70,6 +70,18 @@ String NTPClient::getNtpServerName () {
 
 char* NTPClient::getNtpServerNamePtr () {
     return _ntpServerName;
+}
+
+bool NTPClient::setDSTZone (uint8_t dstZone) {
+    if (dstZone < DST_ZONE_COUNT) {
+        _dstZone = dstZone;
+        return true;
+    }
+    return false;
+}
+
+uint8_t NTPClient::getDSTZone() {
+    return _dstZone;
 }
 
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
@@ -365,19 +377,48 @@ time_t NTPClient::getFirstSync () {
     return _firstSync;
 }
 
-bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte tzHours)
-// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
+bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours)
+// input parameters: "normal time" for year, month, day, hour, weekday and tzHours (0=UTC, 1=MEZ)
 {
-    if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
-    if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-    if ((month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7))) || (month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7))))
-        return true;
-    else
-        return false;
+    if (DST_ZONE_EU == _dstZone) {
+        if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+        if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+        if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+            return true;
+        else
+            return false;
+    }
+
+    if (DST_ZONE_USA == _dstZone) {
+
+        // always false for Jan, Feb and Dec
+        if ((month < 3) || (month > 11)) return false;
+
+        // always true from Apr to Oct
+        if ((month > 3) && (month < 11)) return true;
+
+        // first sunday of current month
+        uint8_t first_sunday = (7 + day - weekday) % 7 + 1;
+
+        // Starts at 2:00 am on the second sunday of Mar
+        if (3 == month) {
+            if (day < 7 + first_sunday) return false;
+            if (day > 7 + first_sunday) return true;
+            return (hour > 2);
+        }
+
+        // Ends a 2:00 am on the first sunday of Nov
+        // We are only getting here if its Nov
+        if (day < first_sunday) return true;
+        if (day > first_sunday) return false;
+        return (hour < 2);
+
+    }
+
 }
 
 boolean NTPClient::isSummerTimePeriod (time_t moment) {
-    return summertime (year (), month (), day (), hour (), getTimeZone ());
+    return summertime (year (), month (), day (), hour (), weekday (), getTimeZone ());
 }
 
 void NTPClient::setLastNTPSync (time_t moment) {
@@ -389,7 +430,7 @@ uint16_t NTPClient::getNTPTimeout () {
 }
 
 boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
-    
+
     if (milliseconds >= MIN_NTP_TIMEOUT) {
         ntpTimeout = milliseconds;
         DEBUGLOG ("Set NTP timeout to %u ms\n", milliseconds);
@@ -397,7 +438,7 @@ boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
     }
     DEBUGLOG ("NTP timeout should be higher than %u ms. You've tried to set %u ms\n", MIN_NTP_TIMEOUT, milliseconds);
     return false;
-    
+
 }
 
 
@@ -414,7 +455,7 @@ time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
     time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR + _minutesOffset * SECS_PER_MIN;
 
     if (_daylight) {
-        if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp), _timeZone)) {
+        if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp), weekday (timeTemp), _timeZone)) {
             timeTemp += SECS_PER_HOUR;
             DEBUGLOG ("Summer Time\n");
         } else {
