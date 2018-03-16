@@ -80,7 +80,7 @@ bool NTPClient::setDSTZone (uint8_t dstZone) {
     return false;
 }
 
-uint8_t NTPClient::getDSTZone() {
+uint8_t NTPClient::getDSTZone () {
     return _dstZone;
 }
 
@@ -287,14 +287,14 @@ int NTPClient::getShortInterval () {
 
 void NTPClient::setDayLight (bool daylight) {
 
-	// Do the maths to change current time, but only if we are not yet sync'ed,
-	// we don't want to trigger the UDP query with the now() below
+    // Do the maths to change current time, but only if we are not yet sync'ed,
+    // we don't want to trigger the UDP query with the now() below
     if (_lastSyncd > 0) {
-        if ((_daylight != daylight) && isSummerTimePeriod( now () )) {
+        if ((_daylight != daylight) && isSummerTimePeriod (now ())) {
             if (daylight) {
-                setTime(now () + SECS_PER_HOUR);
+                setTime (now () + SECS_PER_HOUR);
             } else {
-                setTime(now () - SECS_PER_HOUR);
+                setTime (now () - SECS_PER_HOUR);
             }
         }
     }
@@ -383,7 +383,7 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
     if (DST_ZONE_EU == _dstZone) {
         if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
         if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-        if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+        if (month == 3 && ((hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7))) || (month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7))))
             return true;
         else
             return false;
