@@ -101,6 +101,7 @@ bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
     return false;
 }
 
+#if NETWORK_TYPE == NETWORK_W5100 || NETWORK_TYPE == NETWORK_WIFI101
 boolean sendNTPpacket (IPAddress address, UDP *udp) {
     uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
 
@@ -184,6 +185,152 @@ time_t NTPClient::getTime () {
         onSyncEvent (noResponse);
     return 0; // return 0 if unable to get the time
 }
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
+time_t NTPClient::getTime () {
+    IPAddress timeServerIP; //NTP server IP address
+                            //char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
+    DEBUGLOG ("Starting UDP\n");
+    int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
+    if (error) {
+        DEBUGLOG ("Starting UDP. IP: %s\n", timeServerIP.toString ().c_str ());
+        if (udp->connect (timeServerIP, DEFAULT_NTP_PORT)) {
+            udp->onPacket (std::bind (&NTPClient::processPacket, this, _1));
+            DEBUGLOG ("Sending UDP packet\n");
+            if (sendNTPpacket (udp)) {
+                DEBUGLOG ("NTP request sent\n");
+                status = requested;
+                responseTimer.once_ms (ntpTimeout, &NTPClient::s_processRequestTimeout, static_cast<void*>(this));
+                /*timer1_attachInterrupt (s_processRequestTimeout);
+                timer1_enable (TIM_DIV256, TIM_EDGE, TIM_SINGLE);
+                timer1_write ((uint32_t)(312.5*ntpTimeout));*/
+                if (onSyncEvent)
+                    onSyncEvent (requestSent);
+                return 0;
+            } else {
+                DEBUGLOG ("NTP request error\n");
+                if (onSyncEvent)
+                    onSyncEvent (errorSending);
+                return 0;
+            }
+        } else {
+            if (onSyncEvent)
+                onSyncEvent (noResponse);
+            return 0; // return 0 if unable to get the time
+        }
+    } else {
+        DEBUGLOG ("HostByName error %d\n", error);
+        if (onSyncEvent)
+            onSyncEvent (invalidAddress);
+        return 0; // return 0 if unable to get the time
+    }
+
+}
+
+void dumpNTPPacket (byte *data, size_t length) {
+    //byte *data = packet.data ();
+    //size_t length = packet.length ();
+
+    for (size_t i = 0; i < length; i++) {
+        DEBUGLOG ("%02X ", data[i]);
+        if ((i + 1) % 16 == 0) {
+            DEBUGLOG ("\n");
+        } else if ((i + 1) % 4 == 0) {
+            DEBUGLOG ("| ");
+        }
+    }
+}
+
+boolean NTPClient::sendNTPpacket (AsyncUDP *udp) {
+    AsyncUDPMessage ntpPacket = AsyncUDPMessage ();
+
+    uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
+                                              // set all bytes in the buffer to 0
+    memset (ntpPacketBuffer, 0, NTP_PACKET_SIZE);
+    // Initialize values needed to form NTP request
+    // (see URL above for details on the packets)
+    ntpPacketBuffer[0] = 0b11100011;   // LI, Version, Mode
+    ntpPacketBuffer[1] = 0;     // Stratum, or type of clock
+    ntpPacketBuffer[2] = 6;     // Polling Interval
+    ntpPacketBuffer[3] = 0xEC;  // Peer Clock Precision
+                                // 8 bytes of zero for Root Delay & Root Dispersion
+    ntpPacketBuffer[12] = 49;
+    ntpPacketBuffer[13] = 0x4E;
+    ntpPacketBuffer[14] = 49;
+    ntpPacketBuffer[15] = 52;
+    // all NTP fields have been given values, now
+    // you can send a packet requesting a timestamp:
+    ntpPacket.write (ntpPacketBuffer, NTP_PACKET_SIZE);
+    if (udp->send (ntpPacket)) {
+        DEBUGLOG ("\n");
+        dumpNTPPacket (ntpPacket.data (), ntpPacket.length ());
+        DEBUGLOG ("\nUDP packet sent\n");
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void NTPClient::processPacket (AsyncUDPPacket packet) {
+    uint8_t *ntpPacketBuffer;
+    int size;
+
+    DEBUGLOG ("UDP Packet Type: %s, From: %s:%d, To: %s:%d, Length: %u, Data:\n\n",
+        packet.isBroadcast () ? "Broadcast" : packet.isMulticast () ? "Multicast" : "Unicast",
+        packet.remoteIP ().toString ().c_str (),
+        packet.remotePort (),
+        packet.localIP ().toString ().c_str (),
+        packet.localPort (),
+        packet.length ());
+    //reply to the client
+    dumpNTPPacket (packet.data (), packet.length ());
+    DEBUGLOG ("\n");
+
+    if (status == requested) {
+        size = packet.length ();
+        if (size >= NTP_PACKET_SIZE) {
+            //timer1_disable ();
+            responseTimer.detach ();
+            ntpPacketBuffer = packet.data ();
+            time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
+            setTime (timeValue);
+            status = syncd;
+            setSyncInterval (getLongInterval ());
+            if (!_firstSync) {
+                //    if (timeStatus () == timeSet)
+                _firstSync = timeValue;
+            }
+            setLastNTPSync (timeValue);
+            DEBUGLOG ("Sync frequency set low\n");
+            DEBUGLOG ("Successful NTP sync at %s\n", getTimeDateString (getLastNTPSync ()).c_str ());
+
+            if (onSyncEvent)
+                onSyncEvent (timeSyncd);
+        } else {
+            DEBUGLOG ("Response Error\n");
+            status = unsyncd;
+            if (onSyncEvent)
+                onSyncEvent (responseError);
+        }
+
+    } else {
+        DEBUGLOG ("Unrequested response\n");
+    }
+}
+
+void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
+    status = unsyncd;
+    //timer1_disable ();
+    responseTimer.detach ();
+    DEBUGLOG ("NTP response Timeout\n");
+    if (onSyncEvent)
+        onSyncEvent (noResponse);
+}
+
+void ICACHE_RAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
+    NTPClient* self = reinterpret_cast<NTPClient*>(arg);
+    self->processRequestTimeout ();
+}
+#endif
 
 int8_t NTPClient::getTimeZone () {
     return _timeZone;
@@ -203,8 +350,10 @@ time_t NTPClient::s_getTime () {
 
 #if NETWORK_TYPE == NETWORK_W5100
 bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, EthernetUDP* udp_conn) {
-#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_WIFI101 || NETWORK_TYPE == NETWORK_ESP32
+#elif NETWORK_TYPE == NETWORK_WIFI101
 bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, WiFiUDP* udp_conn) {
+#elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
+bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int8_t minutes, AsyncUDP* udp_conn) {
 #endif
     if (!setNtpServerName (ntpServerName)) {
         DEBUGLOG ("Time sync not started\r\n");
@@ -219,8 +368,10 @@ bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int
     else
 #if NETWORK_TYPE == NETWORK_W5100
         udp = new EthernetUDP ();
-#else
+#elif NETWORK_TYPE == NETWORK_WIFI101
         udp = new WiFiUDP ();
+#else
+        udp = new AsyncUDP ();
 #endif
 
     //_timeZone = timeZone;
@@ -443,7 +594,7 @@ boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
 
 
 
-time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
+time_t NTPClient::decodeNtpMessage (uint8_t *messageBuffer) {
     unsigned long secsSince1900;
     // convert four bytes starting at location 40 to a long integer
     secsSince1900 = (unsigned long)messageBuffer[40] << 24;
