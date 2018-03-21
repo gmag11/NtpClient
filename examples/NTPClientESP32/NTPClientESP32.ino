@@ -45,6 +45,7 @@ or implied, of German Martin
 
 #define ONBOARDLED 5 // Built in LED on ESP-12/ESP-07
 #define SHOW_TIME_PERIOD 5000
+#define NTP_TIMEOUT 1500
 
 int8_t timeZone = 1;
 int8_t minutesTimeZone = 0;
@@ -121,7 +122,7 @@ void loop () {
     if (wifiFirstConnected) {
         wifiFirstConnected = false;
         NTP.setInterval (63);
-        NTP.setNTPTimeout (1000);
+        NTP.setNTPTimeout (NTP_TIMEOUT);
         NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
     }
 
@@ -141,7 +142,7 @@ void loop () {
         Serial.print ("Uptime: ");
         Serial.print (NTP.getUptimeString ()); Serial.print (" since ");
         Serial.println (NTP.getTimeDateString (NTP.getFirstSync ()).c_str ());
-
+        Serial.printf ("Free heap: %u\n", ESP.getFreeHeap ());
         i++;
     }
     delay (0);
