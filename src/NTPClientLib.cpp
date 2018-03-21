@@ -128,7 +128,7 @@ boolean sendNTPpacket (IPAddress address, UDP *udp) {
 
 time_t NTPClient::getTime () {
     IPAddress timeServerIP; //NTP server IP address
-    char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
+    uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
 
 
     DEBUGLOG ("Starting UDP\n");
