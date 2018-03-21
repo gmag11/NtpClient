@@ -274,17 +274,6 @@ void NTPClient::processPacket (AsyncUDPPacket packet) {
     uint8_t *ntpPacketBuffer;
     int size;
 
-    DEBUGLOG ("UDP Packet Type: %s, From: %s:%d, To: %s:%d, Length: %u, Data:\n\n",
-        packet.isBroadcast () ? "Broadcast" : packet.isMulticast () ? "Multicast" : "Unicast",
-        packet.remoteIP ().toString ().c_str (),
-        packet.remotePort (),
-        packet.localIP ().toString ().c_str (),
-        packet.localPort (),
-        packet.length ());
-    //reply to the client
-    dumpNTPPacket (packet.data (), packet.length ());
-    DEBUGLOG ("\n");
-
     if (status == requested) {
         size = packet.length ();
         if (size >= NTP_PACKET_SIZE) {
@@ -315,6 +304,18 @@ void NTPClient::processPacket (AsyncUDPPacket packet) {
     } else {
         DEBUGLOG ("Unrequested response\n");
     }
+
+    DEBUGLOG ("UDP packet received\n");
+    DEBUGLOG ("UDP Packet Type: %s, From: %s:%d, To: %s:%d, Length: %u, Data:\n\n",
+        packet.isBroadcast () ? "Broadcast" : packet.isMulticast () ? "Multicast" : "Unicast",
+        packet.remoteIP ().toString ().c_str (),
+        packet.remotePort (),
+        packet.localIP ().toString ().c_str (),
+        packet.localPort (),
+        packet.length ());
+    //reply to the client
+    dumpNTPPacket (packet.data (), packet.length ());
+    DEBUGLOG ("\n");
 }
 
 void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
@@ -591,8 +592,6 @@ boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
     return false;
 
 }
-
-
 
 time_t NTPClient::decodeNtpMessage (uint8_t *messageBuffer) {
     unsigned long secsSince1900;
