@@ -3,7 +3,7 @@
   "frameworks": "arduino",
   "version": "2.5.0",
   "keywords": "time, date, hour, minute, second, day, week, month, year, RTC, NTP",
-  "platforms": ["atmelavr", "atmelsam", "espressif32", "espressif8266"]
+  "platforms": ["atmelavr", "atmelsam", "espressif32", "espressif8266"],
   "description": "Library to get system sync from a NTP server",
   "url": "https://github.com/gmag11/NtpClient",
   "authors":
