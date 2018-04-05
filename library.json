@@ -1,6 +1,7 @@
 {
 "name": "NtpClientLib",
 "frameworks": "Arduino",
+"version": "1.1.2",
 "keywords": "time, date, hour, minute, second, day, week, month, year, RTC, NTP",
 "description": "Library to get system sync from a NTP server",
 "url": "https://github.com/gmag11/NtpClient",
