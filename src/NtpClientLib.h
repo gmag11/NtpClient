@@ -84,7 +84,7 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #define NETWORK_TYPE NETWORK_WIFI101 // SET YOUR NETWORK INTERFACE
 #elif defined ARDUINO_ARCH_AVR
 #define NETWORK_TYPE NETWORK_W5100
-#elif defined ARDUINO_ARCH_ESP32
+#elif defined ARDUINO_ARCH_ESP32 || defined ESP32
 #define NETWORK_TYPE NETWORK_ESP32
 #endif
 
