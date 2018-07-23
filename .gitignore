@@ -220,3 +220,5 @@ examples/NTPClientESP8266/WifiConfigGM.h
 
 # Visual Studio Code workspace folder
 .vscode/
+*.bak
+**/__vm/**
