@@ -88,15 +88,17 @@ int NTPClient::setTimeZone ( int16_t  timeZoneOffset,     // full offset from GM
 			      uint16_t dstEndMin) {       // end of Summer time if enabled in minutes
 
   if ( timeZoneOffset < -12 * MINS_PER_HOUR  || timeZoneOffset > 14*MINS_PER_HOUR ) return 1;
-  if ( timeZoneDSTOffset < -12 * MINS_PER_HOUR  || timeZoneDSTOffset > 14*MINS_PER_HOUR ) return 2;
-  if ( dstStartMonth  < 1  || dstStartMonth > 12  ) return 3;
-  if ( dstStartWeek  < 1  || dstStartWeek > 5  ) return 4;
-  if ( dstStartDay  < 0  || dstStartDay > 6  ) return 5;
-  if ( dstStartMin  > 24*MINS_PER_HOUR-1  ) return 6;
-  if ( dstEndMonth  < 1  || dstEndMonth > 12  ) return 7;
-  if ( dstEndWeek  < 1  || dstEndWeek > 5  ) return 8;
-  if ( dstEndDay  < 0  || dstEndDay > 6  ) return 9;
-  if ( dstEndMin  > 24*MINS_PER_HOUR-1  ) return 10;
+  if ( timeZoneDSTName != NULL ) {
+    if ( timeZoneDSTOffset < -12 * MINS_PER_HOUR  || timeZoneDSTOffset > 14*MINS_PER_HOUR ) return 2;
+    if ( dstStartMonth  < 1  || dstStartMonth > 12  ) return 3;
+    if ( dstStartWeek  < 1  || dstStartWeek > 5  ) return 4;
+    if ( dstStartDay  < 0  || dstStartDay > 6  ) return 5;
+    if ( dstStartMin  > 24*MINS_PER_HOUR-1  ) return 6;
+    if ( dstEndMonth  < 1  || dstEndMonth > 12  ) return 7;
+    if ( dstEndWeek  < 1  || dstEndWeek > 5  ) return 8;
+    if ( dstEndDay  < 0  || dstEndDay > 6  ) return 9;
+    if ( dstEndMin  > 24*MINS_PER_HOUR-1  ) return 10;
+  }
   int16_t currOffset = (_useDST) ? _tzDSTOffset : _tzOffset;
   _tzName = timeZoneName;
   _tzDSTName = timeZoneDSTName;
@@ -129,7 +131,7 @@ int NTPClient::setTimeZone ( int16_t  timeZoneOffset,     // full offset from GM
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
 
   int16_t totalOffset = timeZone * MINS_PER_HOUR + minutes;
-  return setTimeZone( totalOffset ) == 0;
+  return setTimeZone( totalOffset, "?" ) == 0;
 }
 
 bool sendNTPpacket (const char* address, UDP *udp) {
