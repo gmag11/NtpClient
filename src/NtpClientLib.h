@@ -66,10 +66,10 @@ using namespace placeholders;
 
 #define DEFAULT_NTP_SERVER "pool.ntp.org" // Default international NTP server. I recommend you to select a closer server to get better accuracy
 #define DEFAULT_NTP_PORT 123 // Default local udp port. Select a different one if neccesary (usually not needed)
-#define NTP_TIMEOUT 1500 // Response timeout for NTP requests
 #define DEFAULT_NTP_INTERVAL 1800 // Default sync interval 30 minutes 
 #define DEFAULT_NTP_SHORTINTERVAL 15 // Sync interval when sync has not been achieved. 15 seconds
 #define DEFAULT_NTP_TIMEZONE 0 // Select your local time offset. 0 if UTC time has to be used
+#define MIN_NTP_TIMEOUT 100 // Minumum admisible ntp timeout
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
@@ -370,6 +370,18 @@ public:
     time_t getFirstSync ();
 
     /**
+    * Get configured response timeout for NTP requests.
+    * @param[out] NTP Timeout.
+    */
+    uint16_t getNTPTimeout ();
+
+    /**
+    * Configure response timeout for NTP requests.
+    * @param[out] error code. false if faulty.
+    */
+    boolean setNTPTimeout (uint16_t milliseconds);
+
+    /**
     * Set a callback that triggers after a sync trial.
     * @param[in] function with void(NTPSyncEvent_t) or std::function<void(NTPSyncEvent_t)> (only for ESP8266)
     *				NTPSyncEvent_t equals 0 is there is no error
@@ -406,6 +418,7 @@ public:
      * return the current offset to GMT in minutes;
     */
     int16_t getOffset ();
+
 protected:
 
 #if NETWORK_TYPE == NETWORK_W5100
@@ -430,11 +443,12 @@ protected:
     uint16_t _dstEndMin = 0;       // end of Summer time if enabled in minutes
     bool     _useDST = false;      // currently using DST offset from _tz
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
-    int _shortInterval;         ///< Interval to set periodic time sync until first synchronization.
-    int _longInterval;          ///< Interval to set periodic time sync
+    int _shortInterval = DEFAULT_NTP_SHORTINTERVAL;         ///< Interval to set periodic time sync until first synchronization.
+    int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
     time_t _lastSyncd = 0;      ///< Stored time of last successful sync
     time_t _firstSync = 0;      ///< Stored time of first successful sync after boot
     unsigned long _uptime = 0;  ///< Time since boot
+    uint16_t ntpTimeout = 1500; ///< Response timeout for NTP requests
     onSyncEvent_t onSyncEvent;  ///< Event handler callback
 
     /**

@@ -192,7 +192,7 @@ time_t NTPClient::getTime () {
                                     //if (dnsResult == 1) { //If DNS lookup resulted ok
     sendNTPpacket (getNtpServerName ().c_str (), udp);
     uint32_t beginWait = millis ();
-    while (millis () - beginWait < NTP_TIMEOUT) {
+    while (millis () - beginWait < ntpTimeout ) {
         int size = udp->parsePacket ();
         if (size >= NTP_PACKET_SIZE) {
             DEBUGLOG ("-- Receive NTP Response\n");
@@ -499,6 +499,22 @@ void NTPClient::setLastNTPSync (time_t moment) {
     _lastSyncd = moment;
 }
 
+uint16_t NTPClient::getNTPTimeout () {
+    return ntpTimeout;
+}
+
+boolean NTPClient::setNTPTimeout (uint16_t milliseconds) {
+
+    if (milliseconds >= MIN_NTP_TIMEOUT) {
+        ntpTimeout = milliseconds;
+        DEBUGLOG ("Set NTP timeout to %u ms\n", milliseconds);
+        return true;
+    }
+    DEBUGLOG ("NTP timeout should be higher than %u ms. You've tried to set %u ms\n", MIN_NTP_TIMEOUT, milliseconds);
+    return false;
+
+}
+
 time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
     unsigned long secsSince1900;
     // convert four bytes starting at location 40 to a long integer
@@ -510,6 +526,7 @@ time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
 #define SEVENTY_YEARS 2208988800UL
     time_t timeTemp = secsSince1900 - SEVENTY_YEARS;
     timeTemp += (_tzOffset) *  SECS_PER_MIN;
+
     _useDST = false;
 
     if (_tzDSTName != NULL ) {
