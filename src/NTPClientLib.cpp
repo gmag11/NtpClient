@@ -29,6 +29,8 @@ or implied, of German Martin
 // 
 // 
 
+#define DEBUG_NTPCLIENT
+
 #include "NtpClientLib.h"
 
 #define DBG_PORT Serial
@@ -141,23 +143,36 @@ time_t NTPClient::getTime () {
     while (millis () - beginWait < NTP_TIMEOUT) {
         int size = udp->parsePacket ();
         if (size >= NTP_PACKET_SIZE) {
+		
+		    DEBUGLOG("NTP-Server: " + udp->remoteIP().toString().c_str() + "\n");
             DEBUGLOG ("-- Receive NTP Response\n");
             udp->read (ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
             time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
-            setSyncInterval (getLongInterval ());
-            if (!_firstSync) {
-                //    if (timeStatus () == timeSet)
-                _firstSync = timeValue;
-            }
-            //getFirstSync (); // Set firstSync value if not set before
-            DEBUGLOG ("Sync frequency set low\n");
-            udp->stop ();
-            setLastNTPSync (timeValue);
-            DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str ());
+			if (timeValue != 0) {
+				setSyncInterval (getLongInterval ());
+				if (!_firstSync) {
+					//    if (timeStatus () == timeSet)
+					_firstSync = timeValue;
+				}
+				//getFirstSync (); // Set firstSync value if not set before
+				DEBUGLOG ("Sync frequency set low\n");
+				udp->stop ();
+				setLastNTPSync (timeValue);
+				DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str ());
 
-            if (onSyncEvent)
-                onSyncEvent (timeSyncd);
-            return timeValue;
+				if (onSyncEvent)
+					onSyncEvent (timeSyncd);
+				return timeValue;
+			}
+			else {
+				    DEBUGLOG ("-- No valid NTP data :-(\n");
+					udp->stop ();
+					setSyncInterval (getShortInterval ()); // Retry connection more often
+					if (onSyncEvent)
+						onSyncEvent (noResponse);
+					return 0; // return 0 if unable to get the time
+			}
+				
         }
 #ifdef ARDUINO_ARCH_ESP8266
         ESP.wdtFeed ();
@@ -233,7 +248,7 @@ bool NTPClient::stop () {
 }
 
 bool NTPClient::setInterval (int interval) {
-    if (interval >= 10) {
+    if (interval >= 0) {
         if (_longInterval != interval) {
             _longInterval = interval;
             DEBUGLOG ("Sync interval set to %d\n", interval);
@@ -375,6 +390,12 @@ time_t NTPClient::decodeNtpMessage (char *messageBuffer) {
     secsSince1900 |= (unsigned long)messageBuffer[42] << 8;
     secsSince1900 |= (unsigned long)messageBuffer[43];
 
+	DEBUGLOG(" Secs: %u \n", secsSince1900);
+	
+	if(secsSince1900 == 0) {
+		DEBUGLOG ("Timestamp is Zero\n");
+		return 0;
+	}
 #define SEVENTY_YEARS 2208988800UL
     time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR + _minutesOffset * SECS_PER_MIN;
 
