@@ -33,7 +33,6 @@ or implied, of German Martin
 
 #define DBG_PORT Serial
 
-#define DEBUG_NTPCLIENT
 #ifdef DEBUG_NTPCLIENT
 #define DEBUGLOG(...) DBG_PORT.printf(__VA_ARGS__)
 #else
@@ -155,7 +154,7 @@ time_t NTPClient::getTime () {
 				DEBUGLOG ("Sync frequency set low\n");
 				udp->stop ();
 				setLastNTPSync (timeValue);
-				DEBUGLOG ("Successful NTP sync at %s", getTimeDateString (getLastNTPSync ()).c_str ());
+				DEBUGLOG ("Successful NTP sync at %s\n", getTimeDateString (getLastNTPSync ()).c_str ());
 
 				if (onSyncEvent)
 					onSyncEvent (timeSyncd);
