@@ -205,10 +205,12 @@ public:
 		      uint8_t dstStartMonth = 1,     // start of Summer time if enabled  Month 1 - 12, 0 disabled dst
 		      uint8_t dstStartWeek = 1,      // start of Summer time if enabled Week 1 - 5: (5 means last)
 		      uint8_t dstStartDay = 1,       // start of Summer time if enabled Day 0- 6  (0- Sun)
+		      // if startDay == 7, then sum of (StartMonth+StartWeek) is the day of the year DST starts
 		      uint16_t dstStartMin = 0,     // start of Summer time if enabled in minutes
 		      uint8_t dstEndMonth = 1,       // end of Summer time if enabled  Month 1 - 12
 		      uint8_t dstEndWeek = 1,        // end of Summer time if enabled Week 1 - 5: (5 means last)
 		      uint8_t dstEndDay = 1,         // end of Summer time if enabled Day 0-6  (0- Sun)
+		      // if EndDay == 7, then sum of (EndMonth+EndWeek) is the day of the year DST ends
 		      uint16_t dstEndMin = 0);       // end of Summer time if enabled in minutes
 
     /**

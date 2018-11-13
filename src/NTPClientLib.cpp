@@ -80,23 +80,25 @@ int NTPClient::setTimeZone ( int16_t  timeZoneOffset,     // full offset from GM
 			      int16_t  timeZoneDSTOffset,  // full offset from GMT 0 in minutes  for DST
 			      uint8_t dstStartMonth,     // start of Summer time if enabled  Month 1 - 12, 0 disabled dst
 			      uint8_t dstStartWeek,      // start of Summer time if enabled Week 1 - 5: (5 means last)
-			      uint8_t dstStartDay,       // start of Summer time if enabled Day 1- 7  (1- Sun)
+			      uint8_t dstStartDay,       // start of Summer time if enabled Day 0- 6  (0- Sun)
+			     // if startDay == 7, then sum of (StartMonth+StartWeek) is the day of the year DST starts
 			      uint16_t dstStartMin,     // start of Summer time if enabled in minutes
 			      uint8_t dstEndMonth,       // end of Summer time if enabled  Month 1 - 12
 			      uint8_t dstEndWeek,        // end of Summer time if enabled Week 1 - 5: (5 means last)
-			      uint8_t dstEndDay,         // end of Summer time if enabled Day 1-7  (1- Sun)
+			      uint8_t dstEndDay,         // end of Summer time if enabled Day 0-6  (0- Sun)
+			     // if EndDay == 7, then sum of (EndMonth+EndWeek) is the day of the year DST ends
 			      uint16_t dstEndMin) {       // end of Summer time if enabled in minutes
 
   if ( timeZoneOffset < -12 * MINS_PER_HOUR  || timeZoneOffset > 14*MINS_PER_HOUR ) return 1;
   if ( timeZoneDSTName != NULL ) {
     if ( timeZoneDSTOffset < -12 * MINS_PER_HOUR  || timeZoneDSTOffset > 14*MINS_PER_HOUR ) return 2;
-    if ( dstStartMonth  < 1  || dstStartMonth > 12  ) return 3;
-    if ( dstStartWeek  < 1  || dstStartWeek > 5  ) return 4;
-    if ( dstStartDay  < 0  || dstStartDay > 6  ) return 5;
+    if ( (dstStartMonth  < 1  || dstStartMonth > 12 ) && dstStartDay != 7   ) return 3;
+    if ( (dstStartWeek  < 1  || dstStartWeek > 5  ) && dstStartDay != 7 ) return 4;
+    if ( dstStartDay  < 0  || dstStartDay > 7  ) return 5;
     if ( dstStartMin  > 24*MINS_PER_HOUR-1  ) return 6;
-    if ( dstEndMonth  < 1  || dstEndMonth > 12  ) return 7;
-    if ( dstEndWeek  < 1  || dstEndWeek > 5  ) return 8;
-    if ( dstEndDay  < 0  || dstEndDay > 6  ) return 9;
+    if ( (dstEndMonth  < 1  || dstEndMonth > 12) && dstEndDay != 7  ) return 7;
+    if ( (dstEndWeek  < 1  || dstEndWeek > 5) && dstEndDay != 7  ) return 8;
+    if ( dstEndDay  < 0  || dstEndDay > 7  ) return 9;
     if ( dstEndMin  > 24*MINS_PER_HOUR-1  ) return 10;
   }
   int16_t currOffset = (_useDST) ? _tzDSTOffset : _tzOffset;
@@ -421,19 +423,25 @@ time_t getDstDate ( int dst_year, uint8_t dst_month, uint8_t dst_day, uint8_t ds
    base.Day = 1;
    base.Month = dst_month;
    base.Year = CalendarYrToTm(dst_year);
-   if ( dst_week == 5 ) { // last
-     base.Month += 1; // next month
+   if ( dst_day != 7 ) {
+     if ( dst_week == 5 ) { // last
+       base.Month += 1; // next month
+     }
+     base_month = makeTime(base);
+     if ( dst_week == 5 ) { // last
+       base_month -= SECS_PER_DAY; // now last day of month
+     }
+     wday = dayOfWeek(base_month);
+     if ( dst_week < 5 ) {
+       base_month +=    (SECS_PER_DAY)*((dst_week-1)*7+((dst_day+7-wday)%7));
+     } else {
+       base_month -=    (SECS_PER_DAY)*(((wday+7-dst_day)%7));
+     }
+   } else {
+     base.Month = 1;
+     base_month = makeTime(base);
+     base_month += (SECS_PER_DAY)*(dst_week+dst_month);
    }
-   base_month = makeTime(base);
-   if ( dst_week == 5 ) { // last
-     base_month -= SECS_PER_DAY; // now last day of month
-   }
-   wday = dayOfWeek(base_month);
-   if ( dst_week < 5 ) {
-    base_month +=    (SECS_PER_DAY)*((dst_week-1)*7+((dst_day+7-wday)%7));
-  } else {
-    base_month -=    (SECS_PER_DAY)*(((wday+7-dst_day)%7));
-  }
   return base_month;
   
  }
