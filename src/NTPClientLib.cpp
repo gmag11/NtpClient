@@ -72,33 +72,68 @@ char* NTPClient::getNtpServerNamePtr () {
     return _ntpServerName;
 }
 
-bool NTPClient::setDSTZone (uint8_t dstZone) {
-    if (dstZone < DST_ZONE_COUNT) {
-        _dstZone = dstZone;
-        return true;
-    }
-    return false;
-}
+#define MINS_PER_HOUR 60
 
-uint8_t NTPClient::getDSTZone () {
-    return _dstZone;
+int NTPClient::setTimeZone ( int16_t  timeZoneOffset,     // full offset from GMT 0 in minutes 
+			      char * timeZoneName,
+			      char * timeZoneDSTName,    // NULL if disable
+			      int16_t  timeZoneDSTOffset,  // full offset from GMT 0 in minutes  for DST
+			      uint8_t dstStartMonth,     // start of Summer time if enabled  Month 1 - 12, 0 disabled dst
+			      uint8_t dstStartWeek,      // start of Summer time if enabled Week 1 - 5: (5 means last)
+			      uint8_t dstStartDay,       // start of Summer time if enabled Day 0- 6  (0- Sun)
+			     // if startDay == 7, then sum of (StartMonth+StartWeek) is the day of the year DST starts
+			      int16_t dstStartMin,     // start of Summer time if enabled in minutes
+			      uint8_t dstEndMonth,       // end of Summer time if enabled  Month 1 - 12
+			      uint8_t dstEndWeek,        // end of Summer time if enabled Week 1 - 5: (5 means last)
+			      uint8_t dstEndDay,         // end of Summer time if enabled Day 0-6  (0- Sun)
+			     // if EndDay == 7, then sum of (EndMonth+EndWeek) is the day of the year DST ends
+			      int16_t dstEndMin) {       // end of Summer time if enabled in minutes
+
+  if ( timeZoneOffset < -12 * MINS_PER_HOUR  || timeZoneOffset > 14*MINS_PER_HOUR ) return 1;
+  if ( timeZoneDSTName != NULL ) {
+    if ( timeZoneDSTOffset < -12 * MINS_PER_HOUR  || timeZoneDSTOffset > 14*MINS_PER_HOUR ) return 2;
+    if ( (dstStartMonth  < 1  || dstStartMonth > 12 ) && dstStartDay < 7   ) return 3;
+    if ( (dstStartWeek  < 1  || dstStartWeek > 5  ) && dstStartDay < 7 ) return 4;
+    if ( dstStartDay  < 0  || dstStartDay > 8  ) return 5;
+    if ( dstStartMin  > 167*MINS_PER_HOUR-1  ) return 6;
+    if ( (dstEndMonth  < 1  || dstEndMonth > 12) && dstEndDay < 7  ) return 7;
+    if ( (dstEndWeek  < 1  || dstEndWeek > 5) && dstEndDay < 7  ) return 8;
+    if ( dstEndDay  < 0  || dstEndDay > 8  ) return 9;
+    if ( dstEndMin  > 167*MINS_PER_HOUR-1  ) return 10;
+  }
+  int16_t currOffset = (_useDST) ? _tzDSTOffset : _tzOffset;
+  _tzName = timeZoneName;
+  _tzDSTName = timeZoneDSTName;
+  _tzDSTOffset = timeZoneDSTOffset;
+  _tzOffset = timeZoneOffset;
+  _tzDSTOffset = timeZoneDSTOffset;
+  _dstStartMonth = dstStartMonth;
+  _dstStartWeek  = dstStartWeek;
+  _dstStartDay   = dstStartDay;
+  _dstStartMin   = dstStartMin;
+  _dstEndMonth = dstEndMonth;
+  _dstEndWeek  = dstEndWeek;
+  _dstEndDay   = dstEndDay;
+  _dstEndMin   = dstEndMin;
+  _useDST = false;
+  setTime (now () + (_tzOffset - currOffset) * SECS_PER_MIN);
+  DEBUGLOG ("NTP time zone set to: %d:02d\r\n", _tzOffset < 0 ? "-" : "", abs(_tzOffset)/MINS_PER_HOUR, abs(_tzOffset) % MINS_PER_HOUR);
+  if (_tzDSTName != NULL ) {
+    if (isSummerTimePeriod ( now() ) ) {
+      setTime (now () + (_tzDSTOffset - _tzOffset) * SECS_PER_MIN);
+      _useDST = true;
+      DEBUGLOG ("NTP adjust for DST, time zone set to: %s%d:02d\r\n",
+		_tzDSTOffset < 0 ? "-" : "", abs(_tzDSTOffset)/MINS_PER_HOUR, abs(_tzDSTOffset) % MINS_PER_HOUR);
+    }
+  }
+  return 0;
+  
 }
 
 bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
-    if ((timeZone >= -12) && (timeZone <= 14) && (minutes >= -59) && (minutes <= 59)) {
-        // Do the maths to change current time, but only if we are not yet sync'ed,
-        // we don't want to trigger the UDP query with the now() below
-        if (_lastSyncd > 0) {
-            int8_t timeDiff = timeZone - _timeZone;
-            int8_t minDiff = minutes - _minutesOffset;
-            setTime (now () + timeDiff * SECS_PER_HOUR + minDiff * SECS_PER_MIN);
-        }
-        _timeZone = timeZone;
-        _minutesOffset = minutes;
-        DEBUGLOG ("NTP time zone set to: %d\r\n", timeZone);
-        return true;
-    }
-    return false;
+
+  int16_t totalOffset = timeZone * MINS_PER_HOUR + minutes;
+  return setTimeZone( totalOffset, "?" ) == 0;
 }
 
 #if NETWORK_TYPE == NETWORK_W5100 || NETWORK_TYPE == NETWORK_WIFI101
@@ -124,6 +159,14 @@ boolean sendNTPpacket (IPAddress address, UDP *udp) {
     udp->write (ntpPacketBuffer, NTP_PACKET_SIZE);
     udp->endPacket ();
     return true;
+}
+
+int16_t NTPClient::getOffset () {
+  
+  if ( _useDST == true ) {
+    return _tzDSTOffset;
+  }
+  return _tzOffset;
 }
 
 time_t NTPClient::getTime () {
@@ -343,11 +386,11 @@ void ICACHE_RAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
 #endif
 
 int8_t NTPClient::getTimeZone () {
-    return _timeZone;
+    return _tzOffset/MINS_PER_HOUR;
 }
 
 int8_t NTPClient::getTimeZoneMinutes () {
-    return _minutesOffset;
+    return _tzOffset%MINS_PER_HOUR;
 }
 
 /*void NTPClient::setLastNTPSync(time_t moment) {
@@ -447,7 +490,6 @@ int NTPClient::getShortInterval () {
 }
 
 void NTPClient::setDayLight (bool daylight) {
-
     // Do the maths to change current time, but only if we are not yet sync'ed,
     // we don't want to trigger the UDP query with the now() below
     if (_lastSyncd > 0) {
@@ -466,12 +508,16 @@ void NTPClient::setDayLight (bool daylight) {
 }
 
 bool NTPClient::getDayLight () {
-    return _daylight;
+  return (_tzDSTName != NULL)? true : false ;
 }
 
 String NTPClient::getTimeStr (time_t moment) {
-    char timeStr[10];
-    sprintf (timeStr, "%02d:%02d:%02d", hour (moment), minute (moment), second (moment));
+    char timeStr[15];
+    if ( _tzName == NULL ) {
+      sprintf (timeStr, "%02d:%02d:%02d", hour (moment), minute (moment), second (moment));
+    } else {
+      sprintf (timeStr, "%02d:%02d:%02d %s", hour (moment), minute (moment), second (moment), (_useDST) ? _tzDSTName : _tzName );
+    }
 
     return timeStr;
 }
@@ -485,6 +531,10 @@ String NTPClient::getDateStr (time_t moment) {
 
 String NTPClient::getTimeDateString (time_t moment) {
     return getTimeStr (moment) + " " + getDateStr (moment);
+}
+
+String NTPClient::getDateTimeString (time_t moment) {
+    return getDateStr (moment) + " " + getTimeStr (moment);
 }
 
 time_t NTPClient::getLastNTPSync () {
@@ -538,51 +588,113 @@ time_t NTPClient::getFirstSync () {
     return _firstSync;
 }
 
-bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours)
-// input parameters: "normal time" for year, month, day, hour, weekday and tzHours (0=UTC, 1=MEZ)
+time_t getDstDate ( int dst_year, uint8_t dst_month, uint8_t dst_day, uint8_t dst_week, int16_t dst_min ) {
+   tmElements_t base;
+   time_t base_month;;
+   uint8_t wday; // first_day_of_month
+    char buffer[100];
+
+   base.Second = 0;
+   base.Minute = 0;
+   base.Hour = 0;
+   // base.Minute = dst_min % MINS_PER_HOUR;
+   // base.Hour = dst_min/MINS_PER_HOUR;
+   base.Day = 1;
+   base.Month = dst_month;
+   base.Year = CalendarYrToTm(dst_year);
+   if ( dst_day < 7 ) {
+     if ( dst_week == 5 ) { // last
+       base.Month += 1; // next month
+     }
+     base_month = makeTime(base);
+     if ( dst_week == 5 ) { // last
+       base_month -= SECS_PER_DAY; // now last day of month
+     }
+     wday = dayOfWeek(base_month)-1; // need 0 - 7 range
+     if ( dst_week < 5 ) {
+       base_month +=    (SECS_PER_DAY)*((dst_week-1)*7+((dst_day+7-wday)%7));
+     } else {
+       base_month -=    (SECS_PER_DAY)*(((wday+7-dst_day)%7));
+     }
+   } else if ( dst_day == 8 ) { 
+     // includes leap day range 0 - 365
+     base.Month = 1;
+     base_month = makeTime(base);
+     base_month += (SECS_PER_DAY)*(dst_week+dst_month);
+   } else if ( (dst_week+dst_month) <= (31+28) ){
+     // excludes leap day range 1 - 365
+     // befor Mar 1
+     base.Month = 1;
+     base_month = makeTime(base);
+     base_month += (SECS_PER_DAY)*(dst_week+dst_month-1);
+   } else {
+     base.Month = 3;
+     // excludes leap day range 1 - 365
+     base_month = makeTime(base);
+     base_month += (SECS_PER_DAY)*(dst_week+dst_month-(31+28)-1);
+   }
+   base_month += dst_min*(SECS_PER_MIN);
+  return base_month;
+  
+ }
+
+bool NTPClient::isSummerTimePeriod (time_t moment)
+// input parameters: time to be tested
 {
-    if (DST_ZONE_EU == _dstZone) {
-        if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
-        if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-        if ((month == 3 && ((hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)))) || ((month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))))
-            return true;
-        else
-            return false;
+    time_t end_dst;
+    time_t start_dst;
+    int n_year;
+
+    n_year = year(moment);
+
+    if ( _tzDSTName == NULL ) return false; // No DST
+    start_dst = getDstDate ( n_year, _dstStartMonth, _dstStartDay, _dstStartWeek, _dstStartMin);
+    end_dst = getDstDate ( n_year, _dstEndMonth, _dstEndDay, _dstEndWeek, _dstEndMin);
+    return true;
+
+    if (start_dst < end_dst) { // Northern
+      return ((moment >= start_dst)  && (moment < end_dst))  ? true : false;
+    } else { // Southern
+      return ((moment > end_dst)  && (moment <= start_dst))  ? false : true;
     }
+}
 
-    if (DST_ZONE_USA == _dstZone) {
+bool NTPClient::summertime (int n_year, byte n_month, byte n_day, byte n_hour)
+// input parameters: "normal time" for year, month, day, hour
+{
+    uint8_t s_month;
+    uint8_t s_week;
+    uint8_t s_day;
+    uint8_t e_month;
+    uint8_t e_week;
+    uint8_t e_day;
+    uint8_t dst_hour;
+    tmElements_t cur_tm;
+    time_t cur;
+    time_t end_dst;
+    time_t start_dst;
 
-        // always false for Jan, Feb and Dec
-        if ((month < 3) || (month > 11)) return false;
+    if ( _tzDSTName == NULL ) return false; // No DST
 
-        // always true from Apr to Oct
-        if ((month > 3) && (month < 11)) return true;
+    cur_tm.Second = 0;
+    cur_tm.Minute = 1;
+    cur_tm.Hour  = (uint8_t)n_hour;
+    cur_tm.Day   = (uint8_t)n_day;
+    cur_tm.Month = (uint8_t)n_month;
+    cur_tm.Year  = (uint8_t)CalendarYrToTm(n_year);
+    cur = makeTime(cur_tm);
+    return isSummerTimePeriod (cur);
+}
 
-        // first sunday of current month
-        uint8_t first_sunday = (7 + day - weekday) % 7 + 1;
-
-        // Starts at 2:00 am on the second sunday of Mar
-        if (3 == month) {
-            if (day < 7 + first_sunday) return false;
-            if (day > 7 + first_sunday) return true;
-            return (hour > 2);
-        }
-
-        // Ends a 2:00 am on the first sunday of Nov
-        // We are only getting here if its Nov
-        if (day < first_sunday) return true;
-        if (day > first_sunday) return false;
-        return (hour < 2);
-
-    }
-
-    return false;
+time_t NTPClient::getDstStart () {
+  return getDstDate ( year(), _dstStartMonth, _dstStartDay, _dstStartWeek, _dstStartMin);
 
 }
 
-boolean NTPClient::isSummerTimePeriod (time_t moment) {
-    return summertime (year (), month (), day (), hour (), weekday (), getTimeZone ());
+time_t NTPClient::getDstEnd () {
+  return getDstDate ( year(), _dstEndMonth, _dstEndDay, _dstEndWeek, _dstEndMin);
 }
+
 
 void NTPClient::setLastNTPSync (time_t moment) {
     _lastSyncd = moment;
@@ -619,11 +731,15 @@ time_t NTPClient::decodeNtpMessage (uint8_t *messageBuffer) {
         return 0;
     }
 #define SEVENTY_YEARS 2208988800UL
-    time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR + _minutesOffset * SECS_PER_MIN;
+    time_t timeTemp = secsSince1900 - SEVENTY_YEARS;
+    timeTemp += (_tzOffset) *  SECS_PER_MIN;
 
-    if (_daylight) {
-        if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp), weekday (timeTemp), _timeZone)) {
-            timeTemp += SECS_PER_HOUR;
+    _useDST = false;
+
+    if (_tzDSTName != NULL ) {
+        if (summertime (year (timeTemp), month (timeTemp), day (timeTemp), hour (timeTemp) )) {
+	  timeTemp += (_tzDSTOffset - _tzOffset) *  SECS_PER_MIN;
+	  _useDST = true;
             DEBUGLOG ("Summer Time\n");
         } else {
             DEBUGLOG ("Winter Time\n");

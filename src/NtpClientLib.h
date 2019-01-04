@@ -214,6 +214,27 @@ public:
     bool setTimeZone (int8_t timeZone, int8_t minutes = 0);
 
     /**
+    * Sets timezone.
+    * @param[out] 0 if everything went ok.
+    */
+
+    int setTimeZone (
+		      int16_t  timeZoneOffset,     // full offset from GMT 0 in minutes 
+		      char * timeZoneName = NULL,
+		      char * timeZoneDSTName = NULL,    // NULL if disable
+		      int16_t  timeZoneDSTOffset = 1,  // full offset from GMT 0 in minutes  for DST
+		      uint8_t dstStartMonth = 1,     // start of Summer time if enabled  Month 1 - 12, 0 disabled dst
+		      uint8_t dstStartWeek = 1,      // start of Summer time if enabled Week 1 - 5: (5 means last)
+		      uint8_t dstStartDay = 1,       // start of Summer time if enabled Day 0- 6  (0- Sun)
+		      // if startDay == 7, then sum of (StartMonth+StartWeek) is the day of the year DST starts
+		      int16_t dstStartMin = 0,     // start of Summer time if enabled in minutes
+		      uint8_t dstEndMonth = 1,       // end of Summer time if enabled  Month 1 - 12
+		      uint8_t dstEndWeek = 1,        // end of Summer time if enabled Week 1 - 5: (5 means last)
+		      uint8_t dstEndDay = 1,         // end of Summer time if enabled Day 0-6  (0- Sun)
+		      // if EndDay == 7, then sum of (EndMonth+EndWeek) is the day of the year DST ends
+		      int16_t dstEndMin = 0);       // end of Summer time if enabled in minutes
+
+    /**
     * Gets timezone.
     * @param[out] Time offset in hours (plus or minus).
     */
@@ -226,6 +247,18 @@ public:
     int8_t getTimeZoneMinutes ();
 
     /**
+
+    * Gets DST start date
+    * @param[out] DST start date and time.
+    */
+    time_t getDstStart ();
+
+    /**
+    * Gets DST end date
+    * @param[out] DST end date and time.
+    */
+    time_t getDstEnd ();
+
     * Sets DST zone.
     * @param[in] New DST zone (DST_ZONE_EU || DST_ZONE_USA).
     * @param[out] True if everything went ok.
@@ -242,6 +275,7 @@ public:
     * Stops time synchronization.
     * @param[out] True if everything went ok.
     */
+
     bool stop ();
 
     /**
@@ -335,6 +369,14 @@ public:
     String getTimeDateString (time_t moment);
 
     /**
+    * Convert current date and time to a String.
+    * @param[in] time_t object to convert to String.
+    * @param[out] String constructed from current time.
+    * TODO: Add internationalization support
+    */
+    String getDateTimeString (time_t moment);
+
+    /**
     * Gets last successful sync time in UNIX format.
     * @param[out] Last successful sync time. 0 equals never.
     */
@@ -389,8 +431,8 @@ public:
     * @param[out] True = summertime enabled and time in summertime period
     *			  False = sumertime disabled or time ouside summertime period
     */
-    boolean isSummerTime () {
-        if (_daylight)
+    bool isSummerTime () {
+        if (_tzDSTName != NULL)
             return isSummerTimePeriod (now ());
         else
             return false;
@@ -402,7 +444,17 @@ public:
     * @param[out] True = time in summertime period
     *			  False = time ouside summertime period
     */
-    boolean isSummerTimePeriod (time_t moment);
+    bool isSummerTimePeriod (time_t moment);
+
+    /**
+     * return true if currently using DST offset
+    */
+    bool inSummerTime () { return _useDST; }
+
+    /**
+     * return the current offset to GMT in minutes;
+    */
+    int16_t getOffset ();
 
 protected:
 
@@ -413,10 +465,24 @@ protected:
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
     AsyncUDP *udp;              ///< UDP connection object
 #endif
-    bool _daylight;             ///< Does this time zone have daylight saving?
-    int8_t _timeZone = 0;       ///< Keep track of set time zone offset
-    int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
-    uint8_t _dstZone = DEFAULT_DST_ZONE; ///< Daylight save time zone
+
+  // bool _daylight;             ///< Does this time zone have daylight saving?
+  // int8_t _timeZone = 0;       ///< Keep track of set time zone offset
+    //   int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
+    int16_t  _tzOffset;     // offset from GMT 0 in minutes 
+    char *   _tzName = NULL;
+    char *   _tzDSTName = NULL;    // NULL if disable
+    int16_t  _tzDSTOffset = 0;  // offset from GMT 0 in minutes 
+    uint8_t  _dstStartMonth = 0;     // start of Summer time if enabled  Month 1 - 12, 0 disabled dst
+    uint8_t  _dstStartWeek = 0;      // start of Summer time if enabled Week 1 - 5: (5 means last)
+    uint8_t  _dstStartDay = 0;       // start of Summer time if enabled Day 1- 7  (1- Sun)
+    int16_t _dstStartMin = 0;     // start of Summer time if enabled in minutes
+    uint8_t  _dstEndMonth = 0;       // end of Summer time if enabled  Month 1 - 12
+    uint8_t  _dstEndWeek = 0;        // end of Summer time if enabled Week 1 - 5: (5 means last)
+    uint8_t  _dstEndDay = 0;         // end of Summer time if enabled Day 1-7  (1- Sun)
+    int16_t _dstEndMin = 0;       // end of Summer time if enabled in minutes
+    bool     _useDST = false;      // currently using DST offset from _tz
+
     char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
     int _shortInterval = DEFAULT_NTP_SHORTINTERVAL;         ///< Interval to set periodic time sync until first synchronization.
     int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
@@ -466,11 +532,10 @@ protected:
     * @param[in] Month.
     * @param[in] Day.
     * @param[in] Hour.
-    * @param[in] Weekday (1 for sunday).
-    * @param[in] Time zone offset.
+
     * @param[out] true if date and time are inside summertime period.
     */
-    bool summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours);
+    bool summertime (int year, byte month, byte day, byte hour);
 
     /**
     * Helper function to add leading 0 to hour, minutes or seconds if < 10.
