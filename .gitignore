@@ -66,6 +66,7 @@ artifacts/
 *.pidb
 *.svclog
 *.scc
+*.gch
 
 # Chutzpah Test files
 _Chutzpah*
@@ -210,13 +211,11 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
-WifiConfig.h
 *.vcxproj
 src/examples/NTPClient/__vm/
 *.filters
 *.sln
 examples/NTPClient/__vm/
-examples/NTPClientESP8266/WifiConfigGM.h
 
 # Visual Studio Code workspace folder
 .vscode/
