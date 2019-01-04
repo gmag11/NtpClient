@@ -40,11 +40,7 @@ or implied, of German Martin
 
 //#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
-#ifdef ESP8266
-//extern "C" {
-//#include "user_interface.h"
-//#include "sntp.h"
-//}
+#if defined ESP8266 || defined ESP32
 #include <functional>
 using namespace std;
 using namespace placeholders;
@@ -104,7 +100,7 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #include <Ticker.h>
 #elif NETWORK_TYPE == NETWORK_ESP32
 #include <WiFi.h>
-#include <ESPAsyncUDP.h>
+#include <AsyncUDP.h>
 #include <Ticker.h>
 #else
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
