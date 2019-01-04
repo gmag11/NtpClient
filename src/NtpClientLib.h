@@ -123,6 +123,11 @@ typedef enum {
     unsyncd = -1, // Time may not be valid
     requested = 1, // NTP request sent, waiting for response
 } NTPStatus_t; // Only for internal library use
+
+typedef enum {
+	idle = 0, // Idle state
+	requested = 1, // DNS resolution requested, waiting for response
+} DNSStatus_t; // Only for internal library use
 #endif
 
 #if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32
@@ -428,6 +433,7 @@ protected:
 
 #if NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
     NTPStatus_t status = unsyncd; ///< Sync status
+	DNSStatus_t dnsStatus = idle; ///< DNS request status
     Ticker responseTimer;       ///< Timer to trigger response timeout
 
                                 /**
