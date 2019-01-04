@@ -535,7 +535,7 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
     if (DST_ZONE_EU == _dstZone) {
         if ((month < 3) || (month > 10)) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
         if ((month > 3) && (month < 10)) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-        if (month == 3 && ((hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7))) || (month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7))))
+        if ((month == 3 && ((hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)))) || ((month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))))
             return true;
         else
             return false;
@@ -566,6 +566,8 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
         return (hour < 2);
 
     }
+
+	return false;
 
 }
 
