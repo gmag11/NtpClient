@@ -70,6 +70,7 @@ void onEvent (system_event_id_t event, system_event_info_t info) {
         Serial.printf ("Reason: %d\n", info.disconnected.reason);
         digitalWrite (ONBOARDLED, HIGH); // Turn off LED
         //NTP.stop(); // NTP sync can be disabled to avoid sync errors
+		WiFi.reconnect ();
         break;
     default:
         break;
