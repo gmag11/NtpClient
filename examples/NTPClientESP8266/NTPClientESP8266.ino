@@ -131,6 +131,7 @@ void loop () {
         NTP.setInterval (63);
         NTP.setNTPTimeout (NTP_TIMEOUT);
         NTP.begin (ntpServer, timeZone, true, minutesTimeZone);
+        NTP.setTimeZone (1, "Europe/Madrid", "Europe", 1, 3, 1, 20, 0, 10, 1, 10, 0);
     }
 
     if (syncEventTriggered) {

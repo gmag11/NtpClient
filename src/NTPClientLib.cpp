@@ -39,6 +39,7 @@ or implied, of German Martin
 #define DEBUGLOG(...)
 #endif
 
+#define MINS_PER_HOUR 60
 
 NTPClient::NTPClient () {
 }
@@ -71,8 +72,6 @@ String NTPClient::getNtpServerName () {
 char* NTPClient::getNtpServerNamePtr () {
     return _ntpServerName;
 }
-
-#define MINS_PER_HOUR 60
 
 int NTPClient::setTimeZone ( int16_t  timeZoneOffset,     // full offset from GMT 0 in minutes 
 			      char * timeZoneName,
@@ -136,6 +135,14 @@ bool NTPClient::setTimeZone (int8_t timeZone, int8_t minutes) {
   return setTimeZone( totalOffset, "?" ) == 0;
 }
 
+int16_t NTPClient::getOffset () {
+
+    if (_useDST == true) {
+        return _tzDSTOffset;
+    }
+    return _tzOffset;
+}
+
 #if NETWORK_TYPE == NETWORK_W5100 || NETWORK_TYPE == NETWORK_WIFI101
 boolean sendNTPpacket (IPAddress address, UDP *udp) {
     uint8_t ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store request message
@@ -159,14 +166,6 @@ boolean sendNTPpacket (IPAddress address, UDP *udp) {
     udp->write (ntpPacketBuffer, NTP_PACKET_SIZE);
     udp->endPacket ();
     return true;
-}
-
-int16_t NTPClient::getOffset () {
-  
-  if ( _useDST == true ) {
-    return _tzDSTOffset;
-  }
-  return _tzOffset;
 }
 
 time_t NTPClient::getTime () {
@@ -662,17 +661,17 @@ bool NTPClient::isSummerTimePeriod (time_t moment)
 bool NTPClient::summertime (int n_year, byte n_month, byte n_day, byte n_hour)
 // input parameters: "normal time" for year, month, day, hour
 {
-    uint8_t s_month;
-    uint8_t s_week;
-    uint8_t s_day;
-    uint8_t e_month;
-    uint8_t e_week;
-    uint8_t e_day;
-    uint8_t dst_hour;
+    //uint8_t s_month;
+    //uint8_t s_week;
+    //uint8_t s_day;
+    //uint8_t e_month;
+    //uint8_t e_week;
+    //uint8_t e_day;
+    //uint8_t dst_hour;
     tmElements_t cur_tm;
     time_t cur;
-    time_t end_dst;
-    time_t start_dst;
+    //time_t end_dst;
+    //time_t start_dst;
 
     if ( _tzDSTName == NULL ) return false; // No DST
 

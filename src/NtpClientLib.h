@@ -38,7 +38,7 @@ or implied, of German Martin
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #if defined ESP8266 || defined ESP32
 #include <functional>
@@ -259,17 +259,18 @@ public:
     */
     time_t getDstEnd ();
 
+    /**
     * Sets DST zone.
     * @param[in] New DST zone (DST_ZONE_EU || DST_ZONE_USA).
     * @param[out] True if everything went ok.
     */
-    bool setDSTZone (uint8_t dstZone);
+    //bool setDSTZone (uint8_t dstZone);
 
     /**
     * Gets DST zone.
     * @param[out] DST zone.
     */
-    uint8_t getDSTZone ();
+    //uint8_t getDSTZone ();
 
     /**
     * Stops time synchronization.
@@ -466,7 +467,7 @@ protected:
     AsyncUDP *udp;              ///< UDP connection object
 #endif
 
-  // bool _daylight;             ///< Does this time zone have daylight saving?
+   bool _daylight;             ///< Does this time zone have daylight saving?
   // int8_t _timeZone = 0;       ///< Keep track of set time zone offset
     //   int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
     int16_t  _tzOffset;     // offset from GMT 0 in minutes 
