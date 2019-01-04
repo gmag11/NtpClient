@@ -71,6 +71,7 @@ void onSTADisconnected (WiFiEventStationModeDisconnected event_info) {
     Serial.printf ("Reason: %d\n", event_info.reason);
     digitalWrite (ONBOARDLED, HIGH); // Turn off LED
     //NTP.stop(); // NTP sync can be disabled to avoid sync errors
+	WiFi.reconnect ();
 }
 
 void processSyncEvent (NTPSyncEvent_t ntpEvent) {
