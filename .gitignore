@@ -219,3 +219,5 @@ examples/NTPClient/__vm/
 
 # Visual Studio Code workspace folder
 .vscode/
+*.bak
+**/__vm/**
