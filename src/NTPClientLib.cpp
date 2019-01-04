@@ -156,30 +156,29 @@ time_t NTPClient::getTime () {
             DEBUGLOG ("-- Receive NTP Response\n");
             udp->read (ntpPacketBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
             time_t timeValue = decodeNtpMessage (ntpPacketBuffer);
-  if (timeValue != 0) {
-            setSyncInterval (getLongInterval ());
-            if (!_firstSync) {
-                //    if (timeStatus () == timeSet)
-                _firstSync = timeValue;
-            }
-            //getFirstSync (); // Set firstSync value if not set before
-            DEBUGLOG ("Sync frequency set low\n");
-            udp->stop ();
-            setLastNTPSync (timeValue);
-            DEBUGLOG ("Successful NTP sync at %s\n", getTimeDateString (getLastNTPSync ()).c_str ());
+            if (timeValue != 0) {
+                setSyncInterval (getLongInterval ());
+                if (!_firstSync) {
+                    //    if (timeStatus () == timeSet)
+                    _firstSync = timeValue;
+                }
+                //getFirstSync (); // Set firstSync value if not set before
+                DEBUGLOG ("Sync frequency set low\n");
+                udp->stop ();
+                setLastNTPSync (timeValue);
+                DEBUGLOG ("Successful NTP sync at %s\n", getTimeDateString (getLastNTPSync ()).c_str ());
 
-            if (onSyncEvent)
-                onSyncEvent (timeSyncd);
-            return timeValue;
-    }
-			else {
-        DEBUGLOG ("-- No valid NTP data :-(\n");
-					udp->stop ();
-					setSyncInterval (getShortInterval ()); // Retry connection more often
-					if (onSyncEvent)
-						onSyncEvent (noResponse);
-					return 0; // return 0 if unable to get the time
-			}
+                if (onSyncEvent)
+                    onSyncEvent (timeSyncd);
+                return timeValue;
+            } else {
+                DEBUGLOG ("-- No valid NTP data :-(\n");
+                udp->stop ();
+                setSyncInterval (getShortInterval ()); // Retry connection more often
+                if (onSyncEvent)
+                    onSyncEvent (noResponse);
+                return 0; // return 0 if unable to get the time
+            }
         }
 #ifdef ARDUINO_ARCH_ESP8266
         ESP.wdtFeed ();
@@ -577,7 +576,7 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
 
     }
 
-	return false;
+    return false;
 
 }
 
@@ -613,12 +612,12 @@ time_t NTPClient::decodeNtpMessage (uint8_t *messageBuffer) {
     secsSince1900 |= (unsigned long)messageBuffer[42] << 8;
     secsSince1900 |= (unsigned long)messageBuffer[43];
 
-	DEBUGLOG("Secs: %u \n", secsSince1900);
-	
-	if(secsSince1900 == 0) {
-		DEBUGLOG ("--Timestamp is Zero\n");
-		return 0;
-	}
+    DEBUGLOG ("Secs: %u \n", secsSince1900);
+
+    if (secsSince1900 == 0) {
+        DEBUGLOG ("--Timestamp is Zero\n");
+        return 0;
+    }
 #define SEVENTY_YEARS 2208988800UL
     time_t timeTemp = secsSince1900 - SEVENTY_YEARS + _timeZone * SECS_PER_HOUR + _minutesOffset * SECS_PER_MIN;
 

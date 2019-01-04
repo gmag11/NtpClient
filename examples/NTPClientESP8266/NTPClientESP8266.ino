@@ -43,7 +43,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 #define YOUR_WIFI_PASSWD "YOUR_WIFI_PASSWD"
 #endif // !WIFI_CONFIG_H
 
-#define ONBOARDLED 2 // Built in LED on ESP-12/ESP-07
+#define ONBOARDLED 16 // Built in LED on ESP-12/ESP-07
 #define SHOW_TIME_PERIOD 5000
 #define NTP_TIMEOUT 1500
 
@@ -71,7 +71,7 @@ void onSTADisconnected (WiFiEventStationModeDisconnected event_info) {
     Serial.printf ("Reason: %d\n", event_info.reason);
     digitalWrite (ONBOARDLED, HIGH); // Turn off LED
     //NTP.stop(); // NTP sync can be disabled to avoid sync errors
-	WiFi.reconnect ();
+    WiFi.reconnect ();
 }
 
 void processSyncEvent (NTPSyncEvent_t ntpEvent) {

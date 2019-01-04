@@ -236,7 +236,7 @@ public:
     * Gets DST zone.
     * @param[out] DST zone.
     */
-    uint8_t getDSTZone();
+    uint8_t getDSTZone ();
 
     /**
     * Stops time synchronization.
