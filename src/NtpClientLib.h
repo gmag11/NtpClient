@@ -44,6 +44,11 @@ or implied, of German Martin
 #include <functional>
 using namespace std;
 using namespace placeholders;
+
+extern "C" {
+#include "lwip/err.h"
+#include "lwip/dns.h"
+}
 #endif
 
 #include <TimeLib.h>
@@ -106,7 +111,7 @@ const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 #error "Incorrect platform. Only ARDUINO and ESP8266 MCUs are valid."
 #endif // NETWORK_TYPE
 
-typedef enum {
+typedef enum NTPSyncEvent {
     timeSyncd = 0, // Time successfully got from NTP server
     noResponse = -1, // No response from server
     invalidAddress = -2, // Address not reachable
@@ -118,16 +123,17 @@ typedef enum {
 } NTPSyncEvent_t;
 
 #if NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
-typedef enum {
+typedef enum NTPStatus {
     syncd = 0, // Time synchronized correctly
     unsyncd = -1, // Time may not be valid
-    requested = 1, // NTP request sent, waiting for response
+    ntpRequested = 1, // NTP request sent, waiting for response
 } NTPStatus_t; // Only for internal library use
 
-typedef enum {
+typedef enum DNSStatus {
 	idle = 0, // Idle state
-	requested = 1, // DNS resolution requested, waiting for response
-} DNSStatus_t; // Only for internal library use
+	dnsRequested = 1, // DNS resolution requested, waiting for response
+    dnsSolved = 2,
+} DNSStatus_t; // Only for internal library use//
 #endif
 
 #if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32
@@ -143,7 +149,7 @@ public:
     * Construct NTP client.
     */
     NTPClient ();
-
+    
     /**
     * Starts time synchronization.
     * @param[in] NTP server name as String.
@@ -433,7 +439,7 @@ protected:
 
 #if NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
     NTPStatus_t status = unsyncd; ///< Sync status
-	DNSStatus_t dnsStatus = idle; ///< DNS request status
+    DNSStatus_t dnsStatus = idle; ///< DNS request status
     Ticker responseTimer;       ///< Timer to trigger response timeout
 
                                 /**
@@ -458,6 +464,10 @@ protected:
     * Static method for Ticker argument.
     */
     static void ICACHE_RAM_ATTR s_processRequestTimeout (void* arg);
+
+    static void _s_dns_found (const char *name, const ip_addr_t *ipaddr, void *callback_arg);
+    void _dns_found (const ip_addr_t *ipaddr);
+
 #endif
 
     /**

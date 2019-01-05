@@ -39,7 +39,6 @@ or implied, of German Martin
 #define DEBUGLOG(...)
 #endif
 
-
 NTPClient::NTPClient () {
 }
 
@@ -195,11 +194,27 @@ time_t NTPClient::getTime () {
     return 0; // return 0 if unable to get the time
 }
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
+void NTPClient::_s_dns_found (const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
+    reinterpret_cast<NTPClient*>(callback_arg)->_dns_found (ipaddr);
+}
+
+void NTPClient::_dns_found (const ip_addr_t *ipaddr) {
+    Serial.printf ("---> DNS resolves as %s\n", IPAddress (ipaddr->addr).toString ().c_str ());
+}
+
 time_t NTPClient::getTime () {
     IPAddress timeServerIP; //NTP server IP address
+    static ip4_addr ipaddress;
                             //char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
     DEBUGLOG ("Starting UDP\n");
+    //timeServerIP = IPAddress (ipaddress.addr); // ip address format conversion test
+    //ipaddress.addr = (uint32_t)timeServerIP;
+    err_t err = dns_gethostbyname (getNtpServerName ().c_str (), &ipaddress, (dns_found_callback)&_s_dns_found, this);
+    Serial.printf ("Resultado: %d\n", err);
+    if (err == ERR_OK)
+        Serial.printf ("IP: %s\n", IPAddress (ipaddress.addr).toString ().c_str ());
     int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
+    Serial.printf ("IP resuelta: %s\n", timeServerIP.toString ().c_str ());
     if (error) {
         DEBUGLOG ("Starting UDP. IP: %s\n", timeServerIP.toString ().c_str ());
         if (udp->connect (timeServerIP, DEFAULT_NTP_PORT)) {
@@ -207,7 +222,7 @@ time_t NTPClient::getTime () {
             DEBUGLOG ("Sending UDP packet\n");
             if (sendNTPpacket (udp)) {
                 DEBUGLOG ("NTP request sent\n");
-                status = requested;
+                status = ntpRequested;
                 responseTimer.once_ms (ntpTimeout, &NTPClient::s_processRequestTimeout, static_cast<void*>(this));
                 /*timer1_attachInterrupt (s_processRequestTimeout);
                 timer1_enable (TIM_DIV256, TIM_EDGE, TIM_SINGLE);
@@ -283,7 +298,7 @@ void NTPClient::processPacket (AsyncUDPPacket packet) {
     uint8_t *ntpPacketBuffer;
     int size;
 
-    if (status == requested) {
+    if (status == ntpRequested) {
         size = packet.length ();
         if (size >= NTP_PACKET_SIZE) {
             //timer1_disable ();
