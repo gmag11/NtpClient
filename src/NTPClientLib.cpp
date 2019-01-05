@@ -194,30 +194,57 @@ time_t NTPClient::getTime () {
     return 0; // return 0 if unable to get the time
 }
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
-void NTPClient::_s_dns_found (const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
-    reinterpret_cast<NTPClient*>(callback_arg)->_dns_found (ipaddr);
+void NTPClient::s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
+    reinterpret_cast<NTPClient*>(callback_arg)->dnsFound (ipaddr);
 }
 
-void NTPClient::_dns_found (const ip_addr_t *ipaddr) {
-    Serial.printf ("---> DNS resolves as %s\n", IPAddress (ipaddr->addr).toString ().c_str ());
+void NTPClient::dnsFound (const ip_addr_t *ipaddr) {
+    dnsStatus = dnsSolved;
+    responseTimer.detach ();
+    if (status == unsyncd)
+        setTime (getTime ());
+}
+
+void  NTPClient::processDNSTimeout () {
+    status = unsyncd;
+    dnsStatus = idle;
+    //timer1_disable ();
+    responseTimer.detach ();
+    DEBUGLOG ("DNS response Timeout\n");
+    if (onSyncEvent)
+        onSyncEvent (invalidAddress);
+}
+
+void ICACHE_RAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
+    reinterpret_cast<NTPClient*>(arg)->processDNSTimeout ();
 }
 
 time_t NTPClient::getTime () {
-    IPAddress timeServerIP; //NTP server IP address
-    static ip4_addr ipaddress;
+    //IPAddress timeServerIP; //NTP server IP address
+    static ip_addr_t ipaddress;
+    err_t error = ERR_OK;
+    uint16_t dnsTimeout = 5000;
+
                             //char ntpPacketBuffer[NTP_PACKET_SIZE]; //Buffer to store response message
     DEBUGLOG ("Starting UDP\n");
     //timeServerIP = IPAddress (ipaddress.addr); // ip address format conversion test
     //ipaddress.addr = (uint32_t)timeServerIP;
-    err_t err = dns_gethostbyname (getNtpServerName ().c_str (), &ipaddress, (dns_found_callback)&_s_dns_found, this);
-    Serial.printf ("Resultado: %d\n", err);
-    if (err == ERR_OK)
-        Serial.printf ("IP: %s\n", IPAddress (ipaddress.addr).toString ().c_str ());
-    int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
-    Serial.printf ("IP resuelta: %s\n", timeServerIP.toString ().c_str ());
-    if (error) {
-        DEBUGLOG ("Starting UDP. IP: %s\n", timeServerIP.toString ().c_str ());
-        if (udp->connect (timeServerIP, DEFAULT_NTP_PORT)) {
+    if (dnsStatus == idle)
+    {
+        error = dns_gethostbyname (getNtpServerName ().c_str (), &ipaddress, (dns_found_callback)&s_dnsFound, this);
+        Serial.printf ("DNS result: %d\n", error);
+        if (error == ERR_INPROGRESS) {
+            dnsStatus = dnsRequested;
+            responseTimer.once_ms (dnsTimeout, &NTPClient::s_processDNSTimeout, static_cast<void*>(this));
+            return 0;
+        }
+    }
+    //int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
+    //Serial.printf ("DNS name IP solved: %s\n", IPAddress(ipaddress.ip4.addr).toString ().c_str ());
+    if (error == ERR_OK || dnsStatus == dnsSolved) {
+        dnsStatus = idle;
+        //DEBUGLOG ("Starting UDP. IP: %s\n", timeServerIP.toString ().c_str ());
+        if (udp->connect (&ipaddress, DEFAULT_NTP_PORT)) {
             udp->onPacket (std::bind (&NTPClient::processPacket, this, _1));
             DEBUGLOG ("Sending UDP packet\n");
             if (sendNTPpacket (udp)) {
@@ -627,7 +654,7 @@ time_t NTPClient::decodeNtpMessage (uint8_t *messageBuffer) {
     secsSince1900 |= (unsigned long)messageBuffer[42] << 8;
     secsSince1900 |= (unsigned long)messageBuffer[43];
 
-    DEBUGLOG ("Secs: %u \n", secsSince1900);
+    DEBUGLOG ("Secs: %lu \n", secsSince1900);
 
     if (secsSince1900 == 0) {
         DEBUGLOG ("--Timestamp is Zero\n");

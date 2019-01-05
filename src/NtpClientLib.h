@@ -465,8 +465,10 @@ protected:
     */
     static void ICACHE_RAM_ATTR s_processRequestTimeout (void* arg);
 
-    static void _s_dns_found (const char *name, const ip_addr_t *ipaddr, void *callback_arg);
-    void _dns_found (const ip_addr_t *ipaddr);
+    static void s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *callback_arg);
+    void dnsFound (const ip_addr_t *ipaddr);
+    static void ICACHE_RAM_ATTR s_processDNSTimeout (void* arg);
+    void processDNSTimeout ();
 
 #endif
 
