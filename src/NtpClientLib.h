@@ -38,7 +38,7 @@ or implied, of German Martin
 #ifndef _NtpClientLib_h
 #define _NtpClientLib_h
 
-//#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
+#define DEBUG_NTPCLIENT //Uncomment this to enable debug messages over serial port
 
 #if defined ESP8266 || defined ESP32
 #include <functional>
@@ -423,6 +423,7 @@ protected:
     WiFiUDP *udp;
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
     AsyncUDP *udp;              ///< UDP connection object
+    IPAddress ntpServerIPAddress;
 #endif
     bool _daylight;             ///< Does this time zone have daylight saving?
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
@@ -441,6 +442,7 @@ protected:
     NTPStatus_t status = unsyncd; ///< Sync status
     DNSStatus_t dnsStatus = idle; ///< DNS request status
     Ticker responseTimer;       ///< Timer to trigger response timeout
+    Ticker responseTimer2;       ///< Timer to trigger response timeout
 
                                 /**
                                 * Get packet response and update time as of its data
