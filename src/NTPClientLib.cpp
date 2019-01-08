@@ -257,7 +257,7 @@ time_t NTPClient::getTime () {
         }
     }
     //int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
-    Serial.printf ("DNS name IP solved: %s\n", ntpServerIPAddress.toString ().c_str ());
+    Serial.printf ("%s - DNS name IP solved: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
     if (error == ERR_OK || dnsStatus == dnsSolved) {
         dnsStatus = idle;
         DEBUGLOG ("%s - Starting UDP. IP: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
