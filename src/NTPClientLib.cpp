@@ -211,13 +211,13 @@ IPAddress getIPClass (const ip_addr_t *ipaddr) {
 }
 
 void NTPClient::dnsFound (const ip_addr_t *ipaddr) {
-    IPAddress ip;
+    //IPAddress ip;
 
     dnsStatus = dnsSolved;
     responseTimer2.detach ();
-    ip = getIPClass (ipaddr);
-    DEBUGLOG ("%s - %s\n", __FUNCTION__, ip.toString ().c_str ());
-    if (ipaddr != NULL && ip != 0)
+    ntpServerIPAddress = getIPClass (ipaddr);
+    DEBUGLOG ("%s - %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
+    if (ipaddr != NULL && ntpServerIPAddress != 0)
       setTime (getTime ());
 }
 
@@ -237,7 +237,7 @@ void ICACHE_RAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
 #endif
 
 time_t NTPClient::getTime () {
-    IPAddress ntpServerIPAddress; //NTP server IP address
+    //IPAddress ntpServerIPAddress; //NTP server IP address
 
 #if NETWORK_TYPE == NETWORK_ESP8266
     err_t error = ERR_OK;
@@ -262,7 +262,6 @@ time_t NTPClient::getTime () {
             ntpServerIPAddress = getIPClass (&ipaddress);
         }
     }
-    //int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
     DEBUGLOG ("%s - DNS name IP solved: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
     if (error == ERR_OK && dnsStatus == dnsSolved) {
         dnsStatus = idle;

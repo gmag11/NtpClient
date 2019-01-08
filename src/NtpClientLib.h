@@ -423,7 +423,7 @@ protected:
     WiFiUDP *udp;
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
     AsyncUDP *udp;              ///< UDP connection object
-    //IPAddress ntpServerIPAddress;
+    IPAddress ntpServerIPAddress;
 #endif
     bool _daylight;             ///< Does this time zone have daylight saving?
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
