@@ -198,6 +198,7 @@ void NTPClient::s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *cal
     reinterpret_cast<NTPClient*>(callback_arg)->dnsFound (ipaddr);
 }
 
+#if NETWORK_TYPE == NETWORK_ESP8266
 IPAddress getIPClass (const ip_addr_t *ipaddr) {
     IPAddress ip;
 #ifdef ESP8266
@@ -210,11 +211,13 @@ IPAddress getIPClass (const ip_addr_t *ipaddr) {
 }
 
 void NTPClient::dnsFound (const ip_addr_t *ipaddr) {
+    IPAddress ip;
+
     dnsStatus = dnsSolved;
     responseTimer2.detach ();
-    ntpServerIPAddress = getIPClass (ipaddr);
-    Serial.printf ("%s - %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
-    if (ipaddr != NULL && ntpServerIPAddress != 0)
+    ip = getIPClass (ipaddr);
+    DEBUGLOG ("%s - %s\n", __FUNCTION__, ip.toString ().c_str ());
+    if (ipaddr != NULL && ip != 0)
       setTime (getTime ());
 }
 
@@ -231,10 +234,12 @@ void  NTPClient::processDNSTimeout () {
 void ICACHE_RAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
     reinterpret_cast<NTPClient*>(arg)->processDNSTimeout ();
 }
+#endif
 
 time_t NTPClient::getTime () {
-    //IPAddress timeServerIP; //NTP server IP address
+    IPAddress ntpServerIPAddress; //NTP server IP address
 
+#if NETWORK_TYPE == NETWORK_ESP8266
     err_t error = ERR_OK;
     uint16_t dnsTimeout = 5000;
     ip_addr_t ipaddress;
@@ -246,20 +251,25 @@ time_t NTPClient::getTime () {
     {
         DEBUGLOG ("%s - Resolving DNS of %s\n", __FUNCTION__, getNtpServerName ().c_str ());
         error = dns_gethostbyname (getNtpServerName ().c_str (), &ipaddress, (dns_found_callback)&s_dnsFound, this);
-        Serial.printf ("DNS result: %d\n", error);
+        DEBUGLOG ("%s - DNS result: %d\n", __FUNCTION__, error);
         if (error == ERR_INPROGRESS) {
             dnsStatus = dnsRequested;
             DEBUGLOG ("%s - DNS Resolution in progress\n", __FUNCTION__);
             responseTimer2.once_ms (dnsTimeout, &NTPClient::s_processDNSTimeout, static_cast<void*>(this));
             return 0;
         } else if (error == ERR_OK) {
+            dnsStatus = dnsSolved;
             ntpServerIPAddress = getIPClass (&ipaddress);
         }
     }
     //int error = WiFi.hostByName (getNtpServerName ().c_str (), timeServerIP);
-    Serial.printf ("%s - DNS name IP solved: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
-    if (error == ERR_OK || dnsStatus == dnsSolved) {
+    DEBUGLOG ("%s - DNS name IP solved: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
+    if (error == ERR_OK && dnsStatus == dnsSolved) {
         dnsStatus = idle;
+#elif NETWORK_TYPE == NETWORK_ESP32
+    int error = WiFi.hostByName (getNtpServerName ().c_str (), ntpServerIPAddress);
+    if (error) {
+#endif
         DEBUGLOG ("%s - Starting UDP. IP: %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
         if (udp->connect (ntpServerIPAddress, DEFAULT_NTP_PORT)) {
             udp->onPacket (std::bind (&NTPClient::processPacket, this, _1));
