@@ -43,23 +43,27 @@ NTPClient::NTPClient () {
 }
 
 bool NTPClient::setNtpServerName (String ntpServerName) {
-    char * name = (char *)malloc ((ntpServerName.length () + 1) * sizeof (char));
-    if (!name)
+    uint8_t strLen = ntpServerName.length ();
+    if (strLen > SERVER_NAME_LENGTH || strLen <= 0) {
         return false;
-    ntpServerName.toCharArray (name, ntpServerName.length () + 1);
-    DEBUGLOG ("NTP server set to %s\n", name);
-    free (_ntpServerName);
-    _ntpServerName = name;
+    }
+
+    ntpServerName.toCharArray (_ntpServerName, SERVER_NAME_LENGTH);
+    DEBUGLOG ("NTP server set to %s\n", _ntpServerName);
     return true;
 }
 
 bool NTPClient::setNtpServerName (char* ntpServerName) {
     char *name = ntpServerName;
-    if (name == NULL)
+    if (!name) {
         return false;
+    }
+    if (!strlen (name)) {
+        return false;
+    }
     DEBUGLOG ("NTP server set to %s\n", name);
-    free (_ntpServerName);
-    _ntpServerName = name;
+    memset (_ntpServerName, 0, SERVER_NAME_LENGTH);
+    strcpy (_ntpServerName, name);
     return true;
 }
 

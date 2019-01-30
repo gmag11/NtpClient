@@ -77,6 +77,7 @@ extern "C" {
 #define DST_ZONE_COUNT          (2)
 #define DEFAULT_DST_ZONE        DST_ZONE_EU
 
+#define SERVER_NAME_LENGTH 40
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 
 #ifdef ARDUINO_ARCH_ESP8266
@@ -434,7 +435,7 @@ protected:
     int8_t _timeZone = 0;       ///< Keep track of set time zone offset
     int8_t _minutesOffset = 0;   ///< Minutes offset for time zones with decimal numbers
     uint8_t _dstZone = DEFAULT_DST_ZONE; ///< Daylight save time zone
-    char* _ntpServerName;       ///< Name of NTP server on Internet or LAN
+    char _ntpServerName[SERVER_NAME_LENGTH];       ///< Name of NTP server on Internet or LAN
     int _shortInterval = DEFAULT_NTP_SHORTINTERVAL;         ///< Interval to set periodic time sync until first synchronization.
     int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
     time_t _lastSyncd = 0;      ///< Stored time of last successful sync
