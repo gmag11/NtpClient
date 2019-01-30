@@ -149,6 +149,11 @@ public:
     * Construct NTP client.
     */
     NTPClient ();
+
+    /**
+    * NTP client Class destructor
+    */
+    ~NTPClient ();
     
     /**
     * Starts time synchronization.

@@ -441,9 +441,9 @@ bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int
         DEBUGLOG ("Time sync not started\r\n");
         return false;
     }
-    if (udp_conn)
+    if (udp_conn) {
         udp = udp_conn;
-    else
+    } else if (!udp) { // Check if upd connection was already created
 #if NETWORK_TYPE == NETWORK_W5100
         udp = new EthernetUDP ();
 #elif NETWORK_TYPE == NETWORK_WIFI101
@@ -451,6 +451,7 @@ bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int
 #else
         udp = new AsyncUDP ();
 #endif
+    }
 
     //_timeZone = timeZone;
     setDayLight (daylight);
@@ -470,8 +471,22 @@ bool NTPClient::begin (String ntpServerName, int8_t timeZone, bool daylight, int
     return true;
 }
 
+NTPClient::~NTPClient () {
+    stop ();
+}
+
 bool NTPClient::stop () {
     setSyncProvider (NULL);
+    // Free up connection resources
+    if (udp) {
+#if NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
+        udp->close ();
+#else
+        udp->stop ();
+#endif
+        delete (udp);
+        udp = 0;
+    }
     DEBUGLOG ("Time sync disabled\n");
 
     return true;
