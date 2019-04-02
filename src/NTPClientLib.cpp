@@ -221,8 +221,10 @@ void NTPClient::dnsFound (const ip_addr_t *ipaddr) {
     responseTimer2.detach ();
     ntpServerIPAddress = getIPClass (ipaddr);
     DEBUGLOG ("%s - %s\n", __FUNCTION__, ntpServerIPAddress.toString ().c_str ());
-    if (ipaddr != NULL && ntpServerIPAddress != (uint32_t)(0))
-      setTime (getTime ());
+    if (ipaddr != NULL && ntpServerIPAddress != (uint32_t)(0)) {
+       time_t newTime = getTime();
+       if (newTime) setTime(newTime);
+    }
 }
 
 void  NTPClient::processDNSTimeout () {
