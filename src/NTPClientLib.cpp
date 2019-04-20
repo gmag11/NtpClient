@@ -257,7 +257,7 @@ time_t NTPClient::getTime () {
     {
         DEBUGLOG ("%s - Resolving DNS of %s\n", __FUNCTION__, getNtpServerName ().c_str ());
         error = dns_gethostbyname (getNtpServerName ().c_str (), &ipaddress, (dns_found_callback)&s_dnsFound, this);
-        DEBUGLOG ("%s - DNS result: %d\n", __FUNCTION__, error);
+        DEBUGLOG ("%s - DNS result: %d\n", __FUNCTION__, (int)error);
         if (error == ERR_INPROGRESS) {
             dnsStatus = dnsRequested;
             DEBUGLOG ("%s - DNS Resolution in progress\n", __FUNCTION__);
@@ -301,7 +301,7 @@ time_t NTPClient::getTime () {
             return 0; // return 0 if unable to get the time
         }
     } else {
-        DEBUGLOG ("%s - HostByName error %d\n", error);
+        DEBUGLOG ("%s - HostByName error %d\n", __FUNCTION__, (int)error);
         if (onSyncEvent)
             onSyncEvent (invalidAddress);
         return 0; // return 0 if unable to get the time
