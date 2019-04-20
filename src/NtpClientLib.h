@@ -46,6 +46,8 @@ using namespace std;
 using namespace placeholders;
 
 extern "C" {
+#include "lwip/init.h"
+#include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/dns.h"
 }
