@@ -1,7 +1,7 @@
 {
   "name": "NtpClientLib",
   "frameworks": "arduino",
-  "version": "3.0.0-beta",
+  "version": "3.0.1-beta",
   "keywords": "time, date, hour, minute, second, day, week, month, year, RTC, NTP",
   "platforms": ["atmelavr", "atmelsam", "espressif32", "espressif8266"],
   "description": "Library to get system sync from a NTP server",
