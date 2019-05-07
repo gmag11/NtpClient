@@ -14,7 +14,7 @@
     {
       "name": "ESPAsyncUDP",
       "authors": "Hristo Gochkov",
-      "platforms": "espressif8266"
+      "platforms": ["espressif", "espresif8266"]
 	}],
   "url": "https://github.com/gmag11/NtpClient",
   "authors":
