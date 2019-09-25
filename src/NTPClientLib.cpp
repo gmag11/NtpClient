@@ -353,7 +353,7 @@ boolean NTPClient::sendNTPpacket (AsyncUDP *udp) {
     }
 }
 
-void NTPClient::processPacket (AsyncUDPPacket& packet) {
+void NTPClient::processPacket (AsyncUDPPacket packet) {
     uint8_t *ntpPacketBuffer;
     int size;
 
@@ -559,14 +559,14 @@ bool NTPClient::getDayLight () {
 }
 
 String NTPClient::getTimeStr (time_t moment) {
-    char timeStr[10];
+    static char timeStr[10];
     sprintf (timeStr, "%02d:%02d:%02d", hour (moment), minute (moment), second (moment));
 
     return timeStr;
 }
 
 String NTPClient::getDateStr (time_t moment) {
-    char dateStr[12];
+    static char dateStr[12];
     sprintf (dateStr, "%02d/%02d/%4d", day (moment), month (moment), year (moment));
 
     return dateStr;

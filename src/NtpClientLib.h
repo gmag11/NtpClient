@@ -454,7 +454,7 @@ protected:
                                 * Get packet response and update time as of its data
                                 * @param[in] UDP response packet.
                                 */
-    void processPacket (AsyncUDPPacket& packet);
+    void processPacket (AsyncUDPPacket packet);
 
     /**
     * Send NTP request to server
