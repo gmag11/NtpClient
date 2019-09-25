@@ -9,11 +9,12 @@
     [{
 	  "name": "Time",
 	  "authors": "Paul Stoffregen",
-	  "version": "^5.10"
+	  "version": "^1.50"
 	},
 	{
 	  "name": "ESPAsyncUDP",
-	  "authors": "Hristo Gochkov"
+	  "authors": "Hristo Gochkov",
+	  "platform": "espressif8266"
 	}],
   "url": "https://github.com/gmag11/NtpClient",
   "authors":
