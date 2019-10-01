@@ -368,7 +368,7 @@ boolean NTPClient::sendNTPpacket (AsyncUDP *udp) {
     }
 }
 
-void NTPClient::processPacket (AsyncUDPPacket packet) {
+void NTPClient::processPacket (AsyncUDPPacket& packet) {
     uint8_t *ntpPacketBuffer;
     int size;
 
