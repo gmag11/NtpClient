@@ -1,3 +1,12 @@
+# Notice
+With new improvements in sdk both for esp32 and esp8266, this library has become less usefull. Using internal functions of IDF or NonOS (esp8266) have several advantages and it is mandatory for certain scenarios, like using HTTPS with certificate check.
+
+For that reason this library will be deprecated. I will keep the repository opened for archive reasons, but I will not make any big development on it.
+
+I'll copy the recommended NTP initialisation code for both ESP8266 and ESP32 using Arduino. It is easy and convenient.
+
+Arduino MKR1000 users, if any, can keep using it.
+
 # NtpClientLib
 
 ## Introduction
