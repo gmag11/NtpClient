@@ -423,6 +423,11 @@ public:
     */
     boolean isSummerTimePeriod (time_t moment);
 	
+    /**
+    * Returns sync status
+    * @param[out] True = Device is sinchronized to NTP server
+    *			  False = Synchronization has not happened yet
+    */
 	boolean SyncStatus();
 
 protected:
