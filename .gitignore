@@ -221,3 +221,4 @@ examples/NTPClient/__vm/
 .vscode/
 *.bak
 **/__vm/**
+.pio/
