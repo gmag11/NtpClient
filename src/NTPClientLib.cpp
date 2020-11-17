@@ -220,6 +220,15 @@ IPAddress getIPClass (const ip_addr_t *ipaddr) {
     return ip;
 }
 
+boolean NTPClient::SyncStatus(){
+	
+	if (status==syncd) {
+		return true;
+	}
+	return false;
+	
+}
+
 void NTPClient::dnsFound (const ip_addr_t *ipaddr) {
     //IPAddress ip;
 
