@@ -7,6 +7,18 @@ I'll copy the recommended NTP initialisation code for both ESP8266 and ESP32 usi
 
 Arduino MKR1000 users, if any, can keep using it.
 
+----------
+
+### New library announcement
+
+**(23/nov/2020)** - Due to a current project I needed having NTP synchronization with millisecond accuracy. It is not currently implemented in any NTP client library or internal Espressif SDK. So, I've started a new library that focuses on **high accuracy sync**. It only supports **ESP8266 and ESP32**.
+
+You can find it on GitHub repository https://github.com/gmag11/ESPNtpClient
+
+It relies in internal Posix Time implementation so it is integrated on SDK time calculation. This means that it can be used with TLS mechanism to check certificates validity.
+
+-------------
+
 # NtpClientLib
 
 ## Introduction
