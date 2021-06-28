@@ -42,8 +42,6 @@ or implied, of German Martin
 
 #if defined ESP8266 || defined ESP32
 #include <functional>
-using namespace std;
-using namespace placeholders;
 
 extern "C" {
 #include "lwip/init.h"
@@ -51,6 +49,11 @@ extern "C" {
 #include "lwip/err.h"
 #include "lwip/dns.h"
 }
+
+#ifndef IRAM_ATTR
+#define IRAM_ATTR ICACHE_RAM_ATTR
+#endif
+
 #endif
 
 #include <TimeLib.h>
@@ -475,16 +478,16 @@ protected:
     /**
     * Process internal state in case of a response timeout. If a response comes later is is asumed as non valid.
     */
-    void ICACHE_RAM_ATTR processRequestTimeout ();
+    void IRAM_ATTR processRequestTimeout ();
 
     /**
     * Static method for Ticker argument.
     */
-    static void ICACHE_RAM_ATTR s_processRequestTimeout (void* arg);
+    static void IRAM_ATTR s_processRequestTimeout (void* arg);
 
     static void s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *callback_arg);
     void dnsFound (const ip_addr_t *ipaddr);
-    static void ICACHE_RAM_ATTR s_processDNSTimeout (void* arg);
+    static void IRAM_ATTR s_processDNSTimeout (void* arg);
     void processDNSTimeout ();
 
 #endif

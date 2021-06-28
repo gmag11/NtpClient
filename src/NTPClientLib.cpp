@@ -199,6 +199,7 @@ time_t NTPClient::getTime () {
 }
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
 void NTPClient::s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
+    (void)name;
     reinterpret_cast<NTPClient*>(callback_arg)->dnsFound (ipaddr);
 }
 
@@ -253,7 +254,7 @@ void  NTPClient::processDNSTimeout () {
         onSyncEvent (invalidAddress);
 }
 
-void ICACHE_RAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
+void IRAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
     reinterpret_cast<NTPClient*>(arg)->processDNSTimeout ();
 }
 #endif
@@ -302,7 +303,7 @@ time_t NTPClient::getTime () {
 			return 0;
 		}
         if (udp->connect (ntpServerIPAddress, DEFAULT_NTP_PORT)) {
-            udp->onPacket (std::bind (&NTPClient::processPacket, this, _1));
+            udp->onPacket (std::bind (&NTPClient::processPacket, this, std::placeholders::_1));
             DEBUGLOG ("%s - Sending UDP packet\n", __FUNCTION__);
             if (sendNTPpacket (udp)) {
                 DEBUGLOG ("%s - NTP request sent\n", __FUNCTION__);
@@ -335,6 +336,7 @@ time_t NTPClient::getTime () {
 }
 
 void dumpNTPPacket (byte *data, size_t length) {
+    (void)data;
     //byte *data = packet.data ();
     //size_t length = packet.length ();
 
@@ -426,7 +428,7 @@ void NTPClient::processPacket (AsyncUDPPacket& packet) {
     DEBUGLOG ("\n");
 }
 
-void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
+void IRAM_ATTR NTPClient::processRequestTimeout () {
     status = unsyncd;
     //timer1_disable ();
     responseTimer.detach ();
@@ -435,7 +437,7 @@ void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
         onSyncEvent (noResponse);
 }
 
-void ICACHE_RAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
+void IRAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
     NTPClient* self = reinterpret_cast<NTPClient*>(arg);
     self->processRequestTimeout ();
 }
@@ -695,6 +697,7 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
 }
 
 boolean NTPClient::isSummerTimePeriod (time_t moment) {
+    (void)moment;
     return summertime (year (), month (), day (), hour (), weekday (), getTimeZone ());
 }
 
