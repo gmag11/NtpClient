@@ -199,6 +199,7 @@ time_t NTPClient::getTime () {
 }
 #elif NETWORK_TYPE == NETWORK_ESP8266 || NETWORK_TYPE == NETWORK_ESP32
 void NTPClient::s_dnsFound (const char *name, const ip_addr_t *ipaddr, void *callback_arg) {
+    (void)name;
     reinterpret_cast<NTPClient*>(callback_arg)->dnsFound (ipaddr);
 }
 
@@ -335,6 +336,7 @@ time_t NTPClient::getTime () {
 }
 
 void dumpNTPPacket (byte *data, size_t length) {
+    (void)data;
     //byte *data = packet.data ();
     //size_t length = packet.length ();
 
@@ -695,6 +697,7 @@ bool NTPClient::summertime (int year, byte month, byte day, byte hour, byte week
 }
 
 boolean NTPClient::isSummerTimePeriod (time_t moment) {
+    (void)moment;
     return summertime (year (), month (), day (), hour (), weekday (), getTimeZone ());
 }
 
