@@ -254,7 +254,7 @@ void  NTPClient::processDNSTimeout () {
         onSyncEvent (invalidAddress);
 }
 
-void ICACHE_RAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
+void IRAM_ATTR NTPClient::s_processDNSTimeout (void* arg) {
     reinterpret_cast<NTPClient*>(arg)->processDNSTimeout ();
 }
 #endif
@@ -428,7 +428,7 @@ void NTPClient::processPacket (AsyncUDPPacket& packet) {
     DEBUGLOG ("\n");
 }
 
-void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
+void IRAM_ATTR NTPClient::processRequestTimeout () {
     status = unsyncd;
     //timer1_disable ();
     responseTimer.detach ();
@@ -437,7 +437,7 @@ void ICACHE_RAM_ATTR NTPClient::processRequestTimeout () {
         onSyncEvent (noResponse);
 }
 
-void ICACHE_RAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
+void IRAM_ATTR NTPClient::s_processRequestTimeout (void* arg) {
     NTPClient* self = reinterpret_cast<NTPClient*>(arg);
     self->processRequestTimeout ();
 }
