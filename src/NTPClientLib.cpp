@@ -303,7 +303,7 @@ time_t NTPClient::getTime () {
 			return 0;
 		}
         if (udp->connect (ntpServerIPAddress, DEFAULT_NTP_PORT)) {
-            udp->onPacket (std::bind (&NTPClient::processPacket, this, _1));
+            udp->onPacket (std::bind (&NTPClient::processPacket, this, std::placeholders::_1));
             DEBUGLOG ("%s - Sending UDP packet\n", __FUNCTION__);
             if (sendNTPpacket (udp)) {
                 DEBUGLOG ("%s - NTP request sent\n", __FUNCTION__);

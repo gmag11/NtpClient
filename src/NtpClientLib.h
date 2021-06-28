@@ -42,8 +42,6 @@ or implied, of German Martin
 
 #if defined ESP8266 || defined ESP32
 #include <functional>
-using namespace std;
-using namespace placeholders;
 
 extern "C" {
 #include "lwip/init.h"
