@@ -508,7 +508,7 @@ protected:
     * @param[in] Time zone offset.
     * @param[out] true if date and time are inside summertime period.
     */
-    bool summertime (int year, byte month, byte day, byte hour, byte weekday, byte tzHours);
+    bool summertime (int year, uint8_t month, uint8_t day, uint8_t hour, uint8_t weekday, uint8_t tzHours);
 
     /**
     * Helper function to add leading 0 to hour, minutes or seconds if < 10.
