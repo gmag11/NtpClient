@@ -452,7 +452,7 @@ protected:
     int _longInterval = DEFAULT_NTP_INTERVAL;          ///< Interval to set periodic time sync
     time_t _lastSyncd = 0;      ///< Stored time of last successful sync
     time_t _firstSync = 0;      ///< Stored time of first successful sync after boot
-    unsigned long _uptime = 0;  ///< Time since boot
+    unsigned long long _uptime = 0;  ///< Time since boot
     uint16_t ntpTimeout = 1500; ///< Response timeout for NTP requests
     onSyncEvent_t onSyncEvent;  ///< Event handler callback
 
