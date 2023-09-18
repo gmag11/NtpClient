@@ -612,7 +612,17 @@ void NTPClient::onNTPSyncEvent (onSyncEvent_t handler) {
 }
 
 time_t NTPClient::getUptime () {
-    _uptime = _uptime + (millis () - _uptime);
+    unsigned long long currentMillis = millis();
+    if (currentMillis < _lastMillis)
+    {
+        // millis() has rolled over
+        _uptime += (ULONG_MAX - _lastMillis) + currentMillis;
+    }
+    else
+    {
+        _uptime += (currentMillis - _lastMillis);
+    }
+    _lastMillis = currentMillis;
     return _uptime / 1000;
 }
 
